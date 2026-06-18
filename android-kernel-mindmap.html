@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Android Kernel 学习知识导图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0f1724;
+    color: #e0e6ed;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  header {
+    text-align: center;
+    padding: 36px 20px 12px;
+    background: linear-gradient(135deg, #1a2740 0%, #0f1724 100%);
+    border-bottom: 1px solid rgba(100,180,255,0.12);
+  }
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 2px;
+  }
+  header p { margin-top: 8px; font-size: 14px; color: #7a8ba8; }
+  .mindmap-container { max-width: 1400px; margin: 0 auto; padding: 30px 20px 60px; }
+  .root-node { display: flex; justify-content: center; margin-bottom: 32px; }
+  .root-card {
+    background: linear-gradient(135deg, #1e3a5f, #2a5298);
+    border: 2px solid #4facfe;
+    border-radius: 16px;
+    padding: 18px 40px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(79,172,254,0.25);
+  }
+  .root-card h2 { font-size: 22px; color: #fff; font-weight: 700; }
+  .root-card span { font-size: 12px; color: #9cc9f4; }
+  .branches { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+  .branch {
+    background: #162032;
+    border-radius: 14px;
+    border: 1px solid rgba(100,180,255,0.1);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .branch:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+  .branch-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 20px; cursor: pointer; user-select: none;
+    border-bottom: 1px solid rgba(100,180,255,0.08);
+  }
+  .branch-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .branch-header h3 { font-size: 16px; font-weight: 600; flex: 1; }
+  .branch-header .arrow { font-size: 18px; color: #5a7a9e; transition: transform 0.25s; }
+  .branch-header.open .arrow { transform: rotate(90deg); }
+  .branch-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+  .branch-body.open { max-height: 2000px; }
+  .branch-content { padding: 16px 20px 20px; }
+  .branch-desc { font-size: 13px; color: #7a8ba8; margin-bottom: 14px; line-height: 1.6; }
+  .sub-topics { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sub-tag { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: default; }
+  .learning-path {
+    margin-top: 36px; background: #162032; border-radius: 14px;
+    border: 1px solid rgba(100,180,255,0.1); padding: 24px;
+  }
+  .learning-path h2 {
+    font-size: 20px; font-weight: 700; margin-bottom: 20px;
+    background: linear-gradient(90deg, #f093fb, #f5576c);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .timeline { position: relative; padding-left: 30px; }
+  .timeline::before {
+    content: ''; position: absolute; left: 10px; top: 0; bottom: 0;
+    width: 2px; background: linear-gradient(180deg, #4facfe, #00f2fe, #f093fb);
+  }
+  .timeline-item { position: relative; margin-bottom: 24px; padding-left: 20px; }
+  .timeline-item::before {
+    content: ''; position: absolute; left: -24px; top: 6px;
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid #4facfe; background: #0f1724;
+  }
+  .timeline-item h4 { font-size: 15px; font-weight: 600; color: #4facfe; margin-bottom: 4px; }
+  .timeline-item p { font-size: 13px; color: #7a8ba8; line-height: 1.6; }
+  .resources {
+    margin-top: 36px; background: #162032; border-radius: 14px;
+    border: 1px solid rgba(100,180,255,0.1); padding: 24px;
+  }
+  .resources h2 {
+    font-size: 20px; font-weight: 700; margin-bottom: 16px;
+    background: linear-gradient(90deg, #43e97b, #38f9d7);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .resource-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .resource-item {
+    background: rgba(79,172,254,0.06); border: 1px solid rgba(79,172,254,0.1);
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .resource-item strong { color: #4facfe; font-size: 13px; }
+  .resource-item p { font-size: 12px; color: #7a8ba8; margin-top: 4px; }
+  .c-blue .branch-icon { background: rgba(79,172,254,0.15); color: #4facfe; }
+  .c-blue .sub-tag { background: rgba(79,172,254,0.1); color: #7bc4ff; border: 1px solid rgba(79,172,254,0.2); }
+  .c-green .branch-icon { background: rgba(67,233,123,0.12); color: #43e97b; }
+  .c-green .sub-tag { background: rgba(67,233,123,0.1); color: #7cffaa; border: 1px solid rgba(67,233,123,0.2); }
+  .c-purple .branch-icon { background: rgba(160,120,255,0.15); color: #a078ff; }
+  .c-purple .sub-tag { background: rgba(160,120,255,0.1); color: #c0a4ff; border: 1px solid rgba(160,120,255,0.2); }
+  .c-orange .branch-icon { background: rgba(255,170,80,0.15); color: #ffaa50; }
+  .c-orange .sub-tag { background: rgba(255,170,80,0.1); color: #ffc88a; border: 1px solid rgba(255,170,80,0.2); }
+  .c-pink .branch-icon { background: rgba(240,147,251,0.15); color: #f093fb; }
+  .c-pink .sub-tag { background: rgba(240,147,251,0.1); color: #f5b8fc; border: 1px solid rgba(240,147,251,0.2); }
+  .c-cyan .branch-icon { background: rgba(0,242,254,0.12); color: #00f2fe; }
+  .c-cyan .sub-tag { background: rgba(0,242,254,0.1); color: #66f7ff; border: 1px solid rgba(0,242,254,0.2); }
+  .c-red .branch-icon { background: rgba(245,87,108,0.15); color: #f5576c; }
+  .c-red .sub-tag { background: rgba(245,87,108,0.1); color: #f88a9a; border: 1px solid rgba(245,87,108,0.2); }
+  .c-teal .branch-icon { background: rgba(56,249,215,0.12); color: #38f9d7; }
+  .c-teal .sub-tag { background: rgba(56,249,215,0.1); color: #7cfae0; border: 1px solid rgba(56,249,215,0.2); }
+  .c-yellow .branch-icon { background: rgba(250,220,80,0.15); color: #fadc50; }
+  .c-yellow .sub-tag { background: rgba(250,220,80,0.1); color: #fce884; border: 1px solid rgba(250,220,80,0.2); }
+  @media (max-width: 700px) { .branches { grid-template-columns: 1fr; } header h1 { font-size: 22px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Android Kernel 学习知识导图</h1>
+  <p>涵盖从基础到进阶的完整知识体系 · 点击展开各分支详情</p>
+</header>
+<div class="mindmap-container">
+  <div class="root-node">
+    <div class="root-card">
+      <h2>Android Kernel</h2>
+      <span>基于 Linux Kernel 的 Android 系统内核</span>
+    </div>
+  </div>
+  <div class="branches" id="branches"></div>
+  <div class="learning-path">
+    <h2>推荐学习路线</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <h4>阶段一：Linux 基础</h4>
+        <p>先掌握 Linux 内核基本概念：进程管理、内存管理、文件系统、系统调用。阅读《Linux Kernel Development》或《Understanding the Linux Kernel》。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段二：内核编译与调试</h4>
+        <p>搭建 AOSP 编译环境，学习内核配置（defconfig）、交叉编译、刷机。掌握 printk、ftrace、crash 等调试工具。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段三：Android 特有子系统</h4>
+        <p>深入 Binder IPC、Ashmem、ION/DMA-BUF、Android GKI 架构、SELinux 安全策略、init/property 系统。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段四：驱动与硬件抽象</h4>
+        <p>学习 Linux 设备驱动模型，实践编写字符/块/网络设备驱动。理解 DTS、HAL 与内核交互、SoC 外设驱动开发。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段五：性能与功耗优化</h4>
+        <p>掌握 CPU 调度（EAS/WALT）、thermal 管理、suspend/resume 流程、wakelock 机制、内存压缩（ZRAM/KSM）。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段六：安全与上游贡献</h4>
+        <p>深入理解 Android 安全模型、CVE 分析、GKI 模块化。尝试向 AOSP 或上游 Linux 社区提交 patch。</p>
+      </div>
+    </div>
+  </div>
+  <div class="resources">
+    <h2>核心参考资源</h2>
+    <div class="resource-grid">
+      <div class="resource-item"><strong>AOSP 源码</strong><p>android.googlesource.com — 完整 Android 内核源码及文档</p></div>
+      <div class="resource-item"><strong>kernel.org</strong><p>Linux 内核主线源码、邮件列表、文档</p></div>
+      <div class="resource-item"><strong>LWN.net</strong><p>高质量 Linux 内核技术文章与新闻</p></div>
+      <div class="resource-item"><strong>《Linux Kernel Development》</strong><p>Robert Love 著 — 内核开发经典入门书</p></div>
+      <div class="resource-item"><strong>《Understanding the Linux Kernel》</strong><p>Bovet &amp; Cesati 著 — 深入理解内核实现</p></div>
+      <div class="resource-item"><strong>LKML</strong><p>Linux Kernel Mailing List — 跟踪最新内核开发动态</p></div>
+      <div class="resource-item"><strong>Android GKI 文档</strong><p>source.android.com — Generic Kernel Image 架构说明</p></div>
+      <div class="resource-item"><strong>《Professional Android Sensor Programming》</strong><p>传感器与 HAL 层开发实践</p></div>
+    </div>
+  </div>
+</div>
+<script>
+const data = [
+  {
+    title: "1. 内核基础架构", icon: "🏗", color: "c-blue",
+    desc: "理解 Linux/Android 内核的整体架构与构建系统，是所有后续学习的地基。",
+    topics: ["内核源码目录结构","Kconfig / Makefile 构建系统","内核模块（.ko）机制","系统调用接口（syscall）","内核态与用户态切换","GKI (Generic Kernel Image) 架构","内核版本与分支管理","设备树（DTS/DTB）基础"]
+  },
+  {
+    title: "2. 进程与调度管理", icon: "⚙️", color: "c-green",
+    desc: "Android 依赖 Linux 进程调度实现多任务、优先级管理和前台体验保障。",
+    topics: ["task_struct 与进程描述符","CFS 调度器原理","EAS（能量感知调度）","WALT 算法","cgroup 与 cpuset","进程优先级（nice/rt）","Android 进程生命周期","OOM Killer 与 LMKD","Binder 线程池调度"]
+  },
+  {
+    title: "3. 内存管理", icon: "🧠", color: "c-purple",
+    desc: "Android 设备内存有限，深入理解内存分配、回收和优化机制对性能至关重要。",
+    topics: ["虚拟内存与页表","伙伴系统（Buddy System）","Slab 分配器","vmalloc / kmalloc","页面回收（kswapd/direct reclaim）","ZRAM 压缩","KSM（内核同页合并）","ION / DMA-BUF 内存分配","CMA（连续内存分配）","内存映射（mmap）","Low Memory Killer"]
+  },
+  {
+    title: "4. 文件系统与存储", icon: "📁", color: "c-orange",
+    desc: "Android 使用多种文件系统管理不同存储分区和数据。",
+    topics: ["VFS（虚拟文件系统）层","EXT4 / F2FS","EROFS（只读压缩文件系统）","sdcardfs / FUSE","procfs / sysfs / debugfs","块设备与 I/O 调度","dm-verity / dm-crypt","FBE（文件级加密）","Storage 框架与 vold"]
+  },
+  {
+    title: "5. Binder IPC 机制", icon: "🔗", color: "c-pink",
+    desc: "Binder 是 Android 最核心的进程间通信机制，贯穿系统所有服务调用。",
+    topics: ["Binder 驱动架构（/dev/binder）","binder_proc / binder_thread","事务处理流程","ServiceManager","AIDL 与 HIDL","Binder 线程池管理","oneway 异步调用","Binder 安全检查（SELinux）","性能优化与调试"]
+  },
+  {
+    title: "6. 设备驱动开发", icon: "🔌", color: "c-cyan",
+    desc: "驱动是内核与硬件之间的桥梁，Android 驱动涉及显示、摄像头、传感器等。",
+    topics: ["字符/块/网络设备驱动","platform_driver 模型","设备树绑定（DTS binding）","中断处理（IRQ/Softirq/Tasklet）","DMA 传输","I2C / SPI / UART 驱动","GPIO / Pinctrl 子系统","Regulator / Clock 框架","DRM/KMS 显示驱动","V4L2 摄像头驱动","ALSA/ASoC 音频驱动","Input 子系统"]
+  },
+  {
+    title: "7. 网络子系统", icon: "🌐", color: "c-red",
+    desc: "Android 网络栈基于 Linux 网络子系统，增加了 WiFi、移动数据等特有支持。",
+    topics: ["socket 层与协议栈","TCP/IP 协议族实现","Netfilter / iptables / eBPF","WiFi 驱动（cfg80211/mac80211）","网络命名空间","Traffic Control","netd 与 ConnectivityService","DNS 解析与网络切换"]
+  },
+  {
+    title: "8. 电源与功耗管理", icon: "🔋", color: "c-teal",
+    desc: "电池设备对功耗极度敏感，内核电源管理直接影响续航。",
+    topics: ["suspend / resume 流程","wakelocks 机制","runtime PM","CPU idle / cpufreq governor","thermal 框架（thermal_zone）","Power Supply 驱动","充电管理（charger driver）","DVFS 动态调频调压","doze 模式内核支持"]
+  },
+  {
+    title: "9. 安全机制", icon: "🛡", color: "c-yellow",
+    desc: "Android 安全纵深防御体系中，内核层是最后一道防线。",
+    topics: ["SELinux / SEAndroid 策略","Capabilities 机制","Seccomp 过滤","dm-verity / AVB（Verified Boot）","KASLR / KCFI","内核漏洞类型与 CVE 分析","Android 安全公告（ASB）","TrustZone / TEE 交互","namespace 隔离"]
+  }
+];
+const container = document.getElementById('branches');
+data.forEach((branch) => {
+  const div = document.createElement('div');
+  div.className = `branch ${branch.color}`;
+  div.innerHTML = `
+    <div class="branch-header open" onclick="toggle(this)">
+      <div class="branch-icon">${branch.icon}</div>
+      <h3>${branch.title}</h3>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="branch-body open">
+      <div class="branch-content">
+        <div class="branch-desc">${branch.desc}</div>
+        <div class="sub-topics">
+          ${branch.topics.map(t => `<span class="sub-tag">${t}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  container.appendChild(div);
+});
+function toggle(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+</script>
+</body>
+</html>
