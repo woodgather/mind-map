@@ -1,0 +1,531 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Android Frameworks 开发知识导图 (高级)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0f1724;
+    color: #e0e6ed;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  header {
+    text-align: center;
+    padding: 36px 20px 12px;
+    background: linear-gradient(135deg, #1a2740 0%, #0f1724 100%);
+    border-bottom: 1px solid rgba(100,180,255,0.12);
+  }
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 2px;
+  }
+  header p { margin-top: 8px; font-size: 14px; color: #7a8ba8; }
+  .category-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 24px; margin-top: 28px; margin-bottom: 16px;
+    background: linear-gradient(90deg, rgba(79,172,254,0.08), transparent);
+    border-left: 3px solid;
+    border-radius: 0 8px 8px 0;
+  }
+  .category-header .cat-icon { font-size: 18px; }
+  .category-header h2 { font-size: 18px; font-weight: 700; }
+  .category-header .cat-desc { font-size: 12px; color: #7a8ba8; margin-left: 8px; }
+  .mindmap-container { max-width: 1440px; margin: 0 auto; padding: 30px 20px 60px; }
+  .root-node { display: flex; justify-content: center; margin-bottom: 32px; }
+  .root-card {
+    background: linear-gradient(135deg, #1e3a5f, #2a5298);
+    border: 2px solid #4facfe;
+    border-radius: 16px;
+    padding: 18px 40px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(79,172,254,0.25);
+  }
+  .root-card h2 { font-size: 22px; color: #fff; font-weight: 700; }
+  .root-card span { font-size: 12px; color: #9cc9f4; }
+  .branches { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+  .branch {
+    background: #162032;
+    border-radius: 14px;
+    border: 1px solid rgba(100,180,255,0.1);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .branch:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+  .branch-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px; cursor: pointer; user-select: none;
+    border-bottom: 1px solid rgba(100,180,255,0.08);
+  }
+  .branch-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .branch-header h3 { font-size: 15px; font-weight: 600; flex: 1; }
+  .branch-header .arrow { font-size: 18px; color: #5a7a9e; transition: transform 0.25s; }
+  .branch-header.open .arrow { transform: rotate(90deg); }
+  .branch-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+  .branch-body.open { max-height: 3000px; }
+  .branch-content { padding: 14px 18px 18px; }
+  .branch-desc { font-size: 13px; color: #7a8ba8; margin-bottom: 12px; line-height: 1.6; }
+  .sub-topics { display: flex; flex-wrap: wrap; gap: 7px; }
+  .sub-tag { padding: 4px 11px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: default; }
+  .learning-path {
+    margin-top: 36px; background: #162032; border-radius: 14px;
+    border: 1px solid rgba(100,180,255,0.1); padding: 24px;
+  }
+  .learning-path h2 {
+    font-size: 20px; font-weight: 700; margin-bottom: 20px;
+    background: linear-gradient(90deg, #f093fb, #f5576c);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .timeline { position: relative; padding-left: 30px; }
+  .timeline::before {
+    content: ''; position: absolute; left: 10px; top: 0; bottom: 0;
+    width: 2px; background: linear-gradient(180deg, #4facfe, #00f2fe, #f093fb);
+  }
+  .timeline-item { position: relative; margin-bottom: 24px; padding-left: 20px; }
+  .timeline-item::before {
+    content: ''; position: absolute; left: -24px; top: 6px;
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid #4facfe; background: #0f1724;
+  }
+  .timeline-item h4 { font-size: 15px; font-weight: 600; color: #4facfe; margin-bottom: 4px; }
+  .timeline-item p { font-size: 13px; color: #7a8ba8; line-height: 1.6; }
+  .resources {
+    margin-top: 36px; background: #162032; border-radius: 14px;
+    border: 1px solid rgba(100,180,255,0.1); padding: 24px;
+  }
+  .resources h2 {
+    font-size: 20px; font-weight: 700; margin-bottom: 16px;
+    background: linear-gradient(90deg, #43e97b, #38f9d7);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .resource-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .resource-item {
+    background: rgba(79,172,254,0.06); border: 1px solid rgba(79,172,254,0.1);
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .resource-item strong { color: #4facfe; font-size: 13px; }
+  .resource-item p { font-size: 12px; color: #7a8ba8; margin-top: 4px; }
+  .c-blue .branch-icon { background: rgba(79,172,254,0.15); color: #4facfe; }
+  .c-blue .sub-tag { background: rgba(79,172,254,0.1); color: #7bc4ff; border: 1px solid rgba(79,172,254,0.2); }
+  .c-green .branch-icon { background: rgba(67,233,123,0.12); color: #43e97b; }
+  .c-green .sub-tag { background: rgba(67,233,123,0.1); color: #7cffaa; border: 1px solid rgba(67,233,123,0.2); }
+  .c-purple .branch-icon { background: rgba(160,120,255,0.15); color: #a078ff; }
+  .c-purple .sub-tag { background: rgba(160,120,255,0.1); color: #c0a4ff; border: 1px solid rgba(160,120,255,0.2); }
+  .c-orange .branch-icon { background: rgba(255,170,80,0.15); color: #ffaa50; }
+  .c-orange .sub-tag { background: rgba(255,170,80,0.1); color: #ffc88a; border: 1px solid rgba(255,170,80,0.2); }
+  .c-pink .branch-icon { background: rgba(240,147,251,0.15); color: #f093fb; }
+  .c-pink .sub-tag { background: rgba(240,147,251,0.1); color: #f5b8fc; border: 1px solid rgba(240,147,251,0.2); }
+  .c-cyan .branch-icon { background: rgba(0,242,254,0.12); color: #00f2fe; }
+  .c-cyan .sub-tag { background: rgba(0,242,254,0.1); color: #66f7ff; border: 1px solid rgba(0,242,254,0.2); }
+  .c-red .branch-icon { background: rgba(245,87,108,0.15); color: #f5576c; }
+  .c-red .sub-tag { background: rgba(245,87,108,0.1); color: #f88a9a; border: 1px solid rgba(245,87,108,0.2); }
+  .c-teal .branch-icon { background: rgba(56,249,215,0.12); color: #38f9d7; }
+  .c-teal .sub-tag { background: rgba(56,249,215,0.1); color: #7cfae0; border: 1px solid rgba(56,249,215,0.2); }
+  .c-yellow .branch-icon { background: rgba(250,220,80,0.15); color: #fadc50; }
+  .c-yellow .sub-tag { background: rgba(250,220,80,0.1); color: #fce884; border: 1px solid rgba(250,220,80,0.2); }
+  .c-indigo .branch-icon { background: rgba(100,120,255,0.15); color: #6478ff; }
+  .c-indigo .sub-tag { background: rgba(100,120,255,0.1); color: #8a96ff; border: 1px solid rgba(100,120,255,0.2); }
+  .c-rose .branch-icon { background: rgba(255,100,150,0.15); color: #ff6496; }
+  .c-rose .sub-tag { background: rgba(255,100,150,0.1); color: #ff8ab0; border: 1px solid rgba(255,100,150,0.2); }
+  .c-amber .branch-icon { background: rgba(255,200,60,0.15); color: #ffc83c; }
+  .c-amber .sub-tag { background: rgba(255,200,60,0.1); color: #ffe066; border: 1px solid rgba(255,200,60,0.2); }
+  .c-lime .branch-icon { background: rgba(180,230,80,0.15); color: #b4e650; }
+  .c-lime .sub-tag { background: rgba(180,230,80,0.1); color: #d0f080; border: 1px solid rgba(180,230,80,0.2); }
+  @media (max-width: 700px) {
+    .branches { grid-template-columns: 1fr; }
+    header h1 { font-size: 22px; }
+    .category-header { padding: 10px 16px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Android Frameworks 开发知识导图</h1>
+  <p>AOSP Framework 层深度开发 · 面向高级 Android 系统工程师 · 涉及 SystemServer / HAL / Binder / 图形 / 输入 / 安全全栈</p>
+</header>
+<div class="mindmap-container">
+  <div class="root-node">
+    <div class="root-card">
+      <h2>Android Frameworks (AOSP)</h2>
+      <span>frameworks/base · frameworks/native · hardware/interfaces · system/core</span>
+    </div>
+  </div>
+
+  <div class="category-header" style="border-color: #4facfe;">
+    <span class="cat-icon">🚀</span>
+    <h2 style="color: #4facfe;">系统启动与进程模型</h2>
+    <span class="cat-desc">从 Bootloader 到 Zygote / SystemServer 的完整启动链路</span>
+  </div>
+  <div class="branches" id="cat1"></div>
+
+  <div class="category-header" style="border-color: #a078ff;">
+    <span class="cat-icon">🔌</span>
+    <h2 style="color: #a078ff;">Binder IPC 深度机制</h2>
+    <span class="cat-desc">驱动层到 Framework 层的全链路 IPC 解析</span>
+  </div>
+  <div class="branches" id="cat2"></div>
+
+  <div class="category-header" style="border-color: #43e97b;">
+    <span class="cat-icon">⚙️</span>
+    <h2 style="color: #43e97b;">核心系统服务深度剖析</h2>
+    <span class="cat-desc">AMS / WMS / PMS / IMS / NMS 等服务的源码级理解</span>
+  </div>
+  <div class="branches" id="cat3"></div>
+
+  <div class="category-header" style="border-color: #ffaa50;">
+    <span class="cat-icon">🎨</span>
+    <h2 style="color: #ffaa50;">图形与显示系统</h2>
+    <span class="cat-desc">SurfaceFlinger / HWUI / HWC / DRM 的渲染全管线</span>
+  </div>
+  <div class="branches" id="cat4"></div>
+
+  <div class="category-header" style="border-color: #f093fb;">
+    <span class="cat-icon">🧩</span>
+    <h2 style="color: #f093fb;">HAL 与 Treble 架构</h2>
+    <span class="cat-desc">硬件抽象层 / HIDL / AIDL HAL / VINTF 兼容性框架</span>
+  </div>
+  <div class="branches" id="cat5"></div>
+
+  <div class="category-header" style="border-color: #f5576c;">
+    <span class="cat-icon">🛡️</span>
+    <h2 style="color: #f5576c;">Framework 层安全机制</h2>
+    <span class="cat-desc">SELinux / 权限框架 / Keystore / Gatekeeper / 生物识别</span>
+  </div>
+  <div class="branches" id="cat6"></div>
+
+  <div class="category-header" style="border-color: #00f2fe;">
+    <span class="cat-icon">🏗️</span>
+    <h2 style="color: #00f2fe;">Framework 构建与模块化</h2>
+    <span class="cat-desc">Soong / Blueprint / APEX / Mainline 模块化</span>
+  </div>
+  <div class="branches" id="cat7"></div>
+
+  <div class="category-header" style="border-color: #fadc50;">
+    <span class="cat-icon">🔧</span>
+    <h2 style="color: #fadc50;">Framework 调试与性能分析</h2>
+    <span class="cat-desc">系统级调试手段、trace 分析与性能调优</span>
+  </div>
+  <div class="branches" id="cat8"></div>
+
+  <div class="learning-path">
+    <h2>高级 Frameworks 开发学习路线</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <h4>阶段一：AOSP 编译环境与源码结构</h4>
+        <p>搭建完整 AOSP 编译环境 (Ubuntu / 高性能服务器)，理解 repo 工具、Android.bp / Android.mk 构建系统。通读 frameworks/base、frameworks/native、system/core 的目录结构，理解 Framework 层代码组织方式。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段二：系统启动全流程</h4>
+        <p>深入分析 init 进程启动、init.rc 解析、属性服务、Zygote 启动与预加载机制、SystemServer 启动流程 (startBootstrapServices → startCoreServices → startOtherServices)。理解每个阶段的服务初始化顺序与依赖关系。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段三：Binder IPC 全链路</h4>
+        <p>从内核驱动 ioctl 开始，理解 ServiceManager 注册/查询、Proxy/Stub 模式、AIDL 编译生成代码、HwBinder / Binder3 的演进。实践自定义系统服务并完成 AIDL 接口定义、服务注册、客户端调用全流程。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段四：核心系统服务源码阅读</h4>
+        <p>选择一个核心服务 (推荐从 PMS 或 WMS 入手) 进行源码级阅读。理解服务的启动初始化、请求处理流程、锁机制、与其他服务的交互。使用 GDB/LLDB 进行断点调试，结合 logcat 和 dumpsys 验证理解。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段五：图形与显示管线</h4>
+        <p>理解 Surface / SurfaceControl / SurfaceFlinger 的关系，学习 BufferQueue 生产者-消费者模型、HWC HAL 合成策略、HWUI 渲染管线 (DisplayList → RenderThread → GPU)。掌握 Systrace/Perfetto 分析 Jank 的方法论。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段六：Framework 定制与贡献</h4>
+        <p>尝试修改 Framework 层代码实现自定义功能 (如新增系统服务、修改窗口行为、扩展权限模型)。学习 Gerrit 代码审查流程，尝试向 AOSP 提交 patch。研究 Treble 架构下的 HAL 开发与 APEX 模块化。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="resources">
+    <h2>核心参考资源</h2>
+    <div class="resource-grid">
+      <div class="resource-item"><strong>AOSP Source (cs.android.com)</strong><p>在线浏览完整 Android 源码，支持代码搜索与交叉引用</p></div>
+      <div class="resource-item"><strong>source.android.com</strong><p>Google 官方 AOSP 文档：架构、HAL、Treble、安全等</p></div>
+      <div class="resource-item"><strong>Gityuan 博客 (gityuan.com)</strong><p>Android 系统源码分析：AMS / WMS / Binder / Input 系列</p></div>
+      <div class="resource-item"><strong>《Android 系统源代码情景分析》</strong><p>罗升阳 著 — 从源码角度剖析 Framework 核心模块</p></div>
+      <div class="resource-item"><strong>《深入理解 Android 内核设计思想》</strong><p>林学森 著 — WMS / AMS / Binder / 图形系统深度解析</p></div>
+      <div class="resource-item"><strong>Perfetto / Systrace</strong><p>perfetto.dev — 系统级 trace 分析，定位性能瓶颈</p></div>
+      <div class="resource-item"><strong>Android Gerrit</strong><p>android-review.googlesource.com — AOSP 代码审查与提交</p></div>
+      <div class="resource-item"><strong>《Android 框架揭秘》</strong><p>金泰延 著 — 系统服务、Binder、JNI、SurfaceFlinger 剖析</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const categories = {
+  cat1: [
+    {
+      title: "1. Bootloader 与内核启动", icon: "⚡", color: "c-blue",
+      desc: "从硬件上电到 Linux 内核启动，理解 Android 设备的最早期启动链路。",
+      topics: ["BootROM → Bootloader (LK/ABL) 流程", "fastboot 协议与刷机机制", "Kernel 解压与 start_kernel() 入口", "设备树 (DTS) 与硬件初始化", "Android Verified Boot (AVB) 验证链", "dm-verity 分区校验", "Kernel cmdline 与 bootconfig", "GKI (Generic Kernel Image) 架构"]
+    },
+    {
+      title: "2. init 进程与属性服务", icon: "🔧", color: "c-green",
+      desc: "init 是用户空间第一个进程，负责解析 init.rc、启动属性服务和关键守护进程。",
+      topics: ["init 进程 main() 入口分析", "init.rc 语法与触发器机制", "Action / Service / Import 解析", "属性服务 (property_service) 启动", "__system_property_get / set 流程", "selinux_initialize 初始化", "ueventd / logd / healthd 启动", "First Stage Mount 与 System-as-Root"]
+    },
+    {
+      title: "3. Zygote 启动与 Fork 模型", icon: "🌱", color: "c-purple",
+      desc: "Zygote 是所有 Java 进程的父进程，预加载类和资源以加速应用启动。",
+      topics: ["ZygoteInit.main() 启动流程", "preloadClasses() 类预加载机制", "preloadResources() 资源预加载", "registerZygoteSocket() 通信", "forkSystemServer() 专用流程", "fork() 与 COW (Copy-on-Write)", "Zygote 64/32 位双进程模型", "USAP (Unspecialized App Process) 池"]
+    },
+    {
+      title: "4. SystemServer 启动全流程", icon: "🏛️", color: "c-orange",
+      desc: "SystemServer 是 Android 系统的核心进程，启动并管理所有 Java 层系统服务。",
+      topics: ["SystemServer.main() 与 run()", "startBootstrapServices() 关键服务", "startCoreServices() 核心服务", "startOtherServices() 扩展服务", "SystemServiceManager 管理机制", "服务启动顺序与依赖关系", "Watchdog 监控与重启机制", "SystemServer 崩溃处理 (zygote restart)"]
+    },
+    {
+      title: "5. 应用进程启动", icon: "📱", color: "c-pink",
+      desc: "理解 Android 如何从 Zygote fork 出应用进程并完成初始化。",
+      topics: ["AMS.startProcessLocked() 流程", "ZygoteProcess.start() 与 socket 通信", "RuntimeInit.commonInit() 初始化", "ActivityThread.main() 入口", "Application.onCreate() 调用时机", "handleBindApplication 详细流程", "进程优先级 (adj) 与 OOM", "进程名与 UID 分配机制"]
+    },
+    {
+      title: "6. 关键守护进程", icon: "🖥️", color: "c-cyan",
+      desc: "Android 系统运行多个 native 守护进程，支撑系统核心功能。",
+      topics: ["servicemanager (Binder 注册中心)", "surfaceflinger (显示合成)", "audioserver (音频服务)", "cameraserver (相机服务)", "mediaserver (媒体服务)", "installd (安装守护进程)", "vold (存储卷管理)", "lmkd (Low Memory Killer)"]
+    }
+  ],
+  cat2: [
+    {
+      title: "7. Binder 驱动层原理", icon: "🔧", color: "c-blue",
+      desc: "Binder 驱动是 IPC 的内核基础，理解 ioctl 操作、事务处理和内存映射。",
+      topics: ["/dev/binder 设备节点", "binder_ioctl() 命令类型", "BINDER_WRITE_READ 事务", "binder_transaction 内存拷贝 (一次拷贝)", "mmap 内存映射机制", "binder_proc / binder_thread 结构", "binder_node / binder_ref 对象", "flat_binder_object 序列化"]
+    },
+    {
+      title: "8. ServiceManager 实现", icon: "📋", color: "c-green",
+      desc: "ServiceManager 是 Binder 通信的 DNS，负责服务名到 Binder 引用的映射。",
+      topics: ["ServiceManager 注册流程 (addService)", "ServiceManager 查询流程 (getService)", "服务等待机制 (waitForService)", "ServiceManager 启动 (init.rc)", "defaultServiceManager() 入口", "服务死亡通知 (DeathRecipient)", "服务版本管理", "服务列表枚举 (listServices)"]
+    },
+    {
+      title: "9. AIDL 接口与代码生成", icon: "📝", color: "c-purple",
+      desc: "AIDL 是定义跨进程接口的语言，编译器自动生成 Proxy/Stub 代码。",
+      topics: ["AIDL 语法与数据类型", "aidl 编译器 (AIDL frontend)", "生成的 Stub / Proxy 代码分析", "Parcel 数据序列化", "oneway 异步调用语义", "AIDL 回调接口 (callback)", "AIDL Stable 接口 (NDK backend)", "AIDL 与 HIDL 的演进关系"]
+    },
+    {
+      title: "10. HIDL 与 AIDL HAL", icon: "🔄", color: "c-orange",
+      desc: "Treble 引入 HIDL 实现 Framework 与 Vendor 解耦，AIDL HAL 是新趋势。",
+      topics: ["HIDL 接口定义 (.hal 文件)", "passthrough 模式 (直通)", "binderized 模式 (Binder 化)", "HwBinder 驱动 (/dev/hwbinder)", "hwservicemanager", "AIDL HAL 替代 HIDL (Android 13+)", "FQName 版本管理", "hidl-gen 代码生成工具"]
+    },
+    {
+      title: "11. Binder 线程模型与性能", icon: "📊", color: "c-pink",
+      desc: "理解 Binder 线程池管理、同步/异步调用、引用计数等性能关键点。",
+      topics: ["Binder 线程池 (ProcessState)", "IPCThreadState 事务管理", "同步调用 vs oneway 异步", "Binder 引用计数 (strong/weak)", "Binder 事务缓冲区大小限制 (1MB)", "Binder 与 SELinux 权限检查", "Binder 死亡通知机制", "Binder 调试 (dumpsys / binder debugfs)"]
+    }
+  ],
+  cat3: [
+    {
+      title: "12. ActivityManagerService (AMS) 深度", icon: "📋", color: "c-blue",
+      desc: "AMS 是 Android 最复杂的系统服务，管理四大组件生命周期与进程管理。",
+      topics: ["AMS 启动与初始化 (setSystemProcess)", "Activity 启动全流程 (ATMS 侧)", "startActivity → ActivityStarter", "Task / ActivityStack / ActivityRecord", "进程管理 (ProcessRecord / ProcessList)", "OomAdjuster 调整机制", "ANR 检测原理 (Input/Service/Broadcast)", "广播分发队列 (BroadcastQueue)"]
+    },
+    {
+      title: "13. WindowManagerService (WMS) 深度", icon: "🖥️", color: "c-green",
+      desc: "WMS 管理所有窗口的添加、移除、布局计算和动画，与 SurfaceFlinger 协作显示。",
+      topics: ["WMS 启动与初始化", "addWindow() 窗口添加流程", "WindowState / WindowToken / DisplayContent", "窗口布局计算 (performLayout)", "窗口动画 (WindowAnimator)", "输入法窗口管理 (IME Target)", "多屏管理 (DisplayManagerService)", "窗口类型与 Z-Order 排列"]
+    },
+    {
+      title: "14. PackageManagerService (PMS) 深度", icon: "📦", color: "c-purple",
+      desc: "PMS 负责 APK 解析、安装、权限管理与 Intent 解析，是系统包管理核心。",
+      topics: ["PMS 启动与包扫描 (scanDirTracedLI)", "PackageParser2 解析 APK", "Settings 数据持久化", "APK 安装流程 (installPackageLI)", "增量安装与 Session 机制", "权限管理 (PermissionManagerService)", "Intent 解析与组件查询", "签名校验与 SharedUserId"]
+    },
+    {
+      title: "15. InputManagerService (IMS) 深度", icon: "👆", color: "c-orange",
+      desc: "IMS 负责输入事件的读取、加工和分发，驱动所有触摸和按键交互。",
+      topics: ["InputManagerService 启动", "EventHub (epoll + inotify)", "InputReader 线程 (事件加工)", "InputMapper 映射器", "InputDispatcher 线程 (事件分发)", "ANR 检测 (Input Dispatch Timeout)", "输入事件与窗口焦点", "InputChannel (socketpair) 通信"]
+    },
+    {
+      title: "16. PowerManagerService 与电源管理", icon: "🔋", color: "c-pink",
+      desc: "PMS 管理设备电源状态、WakeLock、休眠唤醒和亮度控制。",
+      topics: ["PowerManagerService 启动", "WakeLock 获取与释放流程", "PowerManagerInternal 接口", "SuspendBlocker 机制", "Display Power Controller", "亮度管理 (AutomaticBrightness)", "Doze 模式与 DeviceIdleController", "Battery Stats 电量统计"]
+    },
+    {
+      title: "17. ContentProvider 与跨进程数据", icon: "🔗", color: "c-cyan",
+      desc: "ContentProvider 是 Android 标准的跨进程数据共享机制，理解其启动与权限模型。",
+      topics: ["ContentProvider 启动 (installProvider)", "getContentProvider 流程", "ProviderInfo / ProviderMap", "acquireProvider 引用计数", "跨进程 CursorWindow 共享", "ContentResolver Binder 调用链", "ContentProvider 权限控制", "SyncAdapter 与 ContentProvider 协作"]
+    },
+    {
+      title: "18. NotificationManagerService", icon: "🔔", color: "c-red",
+      desc: "NMS 管理通知的发布、更新、分发与显示策略。",
+      topics: ["NotificationManagerService 启动", "notify() 通知发布流程", "通知渠道 (NotificationChannel)", "通知策略 (ZenPolicy / DND)", "通知分发 (StatusBar / HeadsUp)", "通知排序与优先级", "NotificationListenerService", "通知历史与回放"]
+    },
+    {
+      title: "19. AlarmManagerService 与 JobScheduler", icon: "⏰", color: "c-teal",
+      desc: "定时任务与后台调度是 Android 电源管理的关键。",
+      topics: ["AlarmManagerService 原理", "RTC / ELAPSED_REALTIME 唤醒", "PendingIntent 与闹钟", "JobSchedulerService 架构", "JobInfo / JobParameters / JobService", "约束条件 (网络/充电/空闲)", "Job 延迟与批处理优化", "WorkManager 与 JobScheduler 关系"]
+    }
+  ],
+  cat4: [
+    {
+      title: "20. Surface 与 BufferQueue", icon: "🖼️", color: "c-blue",
+      desc: "Surface 是图形缓冲区的生产者端，BufferQueue 连接生产者与 SurfaceFlinger。",
+      topics: ["Surface / SurfaceControl 层级", "BufferQueue 核心原理", "IGraphicBufferProducer / Consumer", "Buffer 状态机 (DEQUEUED→QUEUED→ACQUIRED→FREE)", "GraphicBuffer 分配 (gralloc HAL)", "栅栏同步 (Fence)", "共享缓冲区模式", "BLASTBufferQueue (Android 12+)"]
+    },
+    {
+      title: "21. SurfaceFlinger 合成引擎", icon: "🎬", color: "c-green",
+      desc: "SurfaceFlinger 是 Android 显示系统的核心，负责将多个 Layer 合成到屏幕。",
+      topics: ["SurfaceFlinger 启动与初始化", "Layer / BufferLayer / EffectLayer", "VSYNC 信号调度 (VsyncReactor)", "合成策略 (Client / Device 合成)", "HWComposer HAL 接口", "Display 热插拔处理", "事务处理 (SurfaceComposerClient)", "RenderEngine (GPU 回退合成)"]
+    },
+    {
+      title: "22. HWUI 与渲染管线", icon: "🎨", color: "c-purple",
+      desc: "HWUI 是 Android 的硬件加速 UI 渲染引擎，负责 View 树的 GPU 渲染。",
+      topics: ["RenderThread 渲染线程", "DisplayList / RenderNode 树", "Canvas 录制与回放", "OpenGL ES / Vulkan 后端", "Skia 渲染库", "硬件加速开关与限制", "Layer (离屏缓冲) 机制", "RenderThread 与 UI 线程同步"]
+    },
+    {
+      title: "23. HWC (Hardware Composer)", icon: "🖥️", color: "c-orange",
+      desc: "HWC HAL 负责硬件合成，决定哪些 Layer 由 GPU 合成、哪些由 Display 硬件合成。",
+      topics: ["HWC HAL 接口 (IComposerClient)", "Layer 合成类型 (Device/Client/SolidColor)", "Display 硬件能力查询", "合成策略决策 (validate/present)", "色彩管理与 HDR", "多 Display 输出", "DisplayPort / HDMI / DSI", "DRM/KMS 内核驱动交互"]
+    },
+    {
+      title: "24. WindowManager 与 ViewRootImpl", icon: "🪟", color: "c-pink",
+      desc: "ViewRootImpl 是 View 系统与 WMS 之间的桥梁，负责 View 的测量/布局/绘制。",
+      topics: ["ViewRootImpl.setView() 初始化", "performTraversals() 三大流程", "measure / layout / draw 流程", "Choreographer VSYNC 调度", "relayoutWindow 与 Surface 分配", "窗口类型 (Application/Sub/System)", "DecorView 层级结构", "WindowSession (IWindowSession)"]
+    },
+    {
+      title: "25. 显示子系统配置", icon: "📐", color: "c-cyan",
+      desc: "理解 Android 显示配置 (DPI / 刷新率 / 色彩空间) 对 Framework 层的影响。",
+      topics: ["DisplayInfo 与 DisplayMetrics", "密度 (DPI / density) 计算", "刷新率切换 (LTPO / VRR)", "色彩模式 (sRGB / P3 / HDR)", "屏幕旋转 (DisplayRotation)", "多屏 (VirtualDisplay / Presentation)", "圆角与刘海屏 (DisplayCutout)", "暗色模式 (DarkTheme)"]
+    }
+  ],
+  cat5: [
+    {
+      title: "26. Treble 架构总览", icon: "🏗️", color: "c-blue",
+      desc: "Treble 是 Android 8.0 引入的架构重构，实现 Framework 与 Vendor 解耦。",
+      topics: ["Treble 架构设计目标", "Framework / Vendor 分区隔离", "VNDK (Vendor NDK)", "VNDK-SP / VNDK-ext 概念", "Vendor Interface 版本管理", "GSI (Generic System Image)", "CTS-on-GTO 验证", "Launch AIDL 与稳定接口"]
+    },
+    {
+      title: "27. HAL 接口定义与实现", icon: "🔧", color: "c-green",
+      desc: "HAL (硬件抽象层) 是 Framework 与内核驱动之间的接口层。",
+      topics: ["HIDL 接口定义 (.hal 文件)", "HAL 服务实现 (hidl_gen 生成)", "passthrough vs binderized 模式", "AIDL HAL 替代方案 (Android 13+)", "HAL 服务注册 (hwservicemanager)", "HAL 版本管理与兼容性", "HAL 进程生命周期", "hidl2aidl 迁移工具"]
+    },
+    {
+      title: "28. VINTF (Vendor Interface)", icon: "📋", color: "c-purple",
+      desc: "VINTF 框架确保 System 与 Vendor 的兼容性，管理 HAL 版本清单。",
+      topics: ["VINTF manifest (device manifest)", "VINTF compatibility matrix", "OTA 兼容性检查", "FQName 版本命名", "lshal 工具 (HAL 列表查询)", "manifest.xml vs compatibility_matrix", "Runtime Info 校验", "Kernel 兼容性矩阵"]
+    },
+    {
+      title: "29. APEX 与 Mainline 模块", icon: "📦", color: "c-orange",
+      desc: "APEX 是 Android 10+ 引入的模块化更新机制，Mainline 可独立更新系统组件。",
+      topics: ["APEX 包格式与结构", "apexd 守护进程", "APEX 安装与激活流程", "Mainline 模块列表", "Google Play System Updates", "APEX 与 AOSP 模块化", "APEX 签名与验证", "Compressed APEX (Android 12+)"]
+    },
+    {
+      title: "30. SELinux 策略开发", icon: "🛡️", color: "c-pink",
+      desc: "Android 使用 SELinux 强制访问控制，Framework 开发者需理解策略编写。",
+      topics: ["SELinux 基础 (Type Enforcement)", "Android SELinux 策略结构", "sepolicy 目录与文件组织", "te 文件编写 (allow/dontaudit)", "file_contexts / property_contexts", "SELinux 域转换 (domain transition)", "SELinux 调试 (audit2allow / dmesg)", "Treble 对 SELinux 的影响"]
+    }
+  ],
+  cat6: [
+    {
+      title: "31. 权限框架深度", icon: "🔐", color: "c-blue",
+      desc: "Android 权限框架从安装时权限演进到运行时权限，涉及 Framework 多个服务。",
+      topics: ["PermissionManagerService 实现", "运行时权限授予流程", "权限组与权限策略", "自定义权限定义与使用", "系统级权限 (signature / privileged)", "AppOps 权限粒度控制", "Android 13+ 细粒度权限", "权限策略 (PermissionPolicyService)"]
+    },
+    {
+      title: "32. Keystore 与密钥管理", icon: "🔑", color: "c-green",
+      desc: "Keystore 系统提供安全的密钥存储和加密操作，与硬件安全模块集成。",
+      topics: ["Keystore 2.0 架构", "KeyStore / KeyMint HAL", "密钥生成与存储流程", "TEE (可信执行环境) 集成", "Gatekeeper (锁屏认证)", "StrongBox 硬件安全", "密钥证明 (Key Attestation)", "密钥轮转与版本管理"]
+    },
+    {
+      title: "33. 网络安全策略", icon: "🌐", color: "c-purple",
+      desc: "Android 网络安全框架管理 TLS/SSL、证书固定和网络安全配置。",
+      topics: ["network_security_config.xml", "Certificate Authority 信任", "Certificate Pinning 配置", "Cleartext Traffic 策略", "TrustManager 自定义", "网络安全调试 (mitmproxy)", "DNS-over-HTTPS (DoH)", "VPN 框架 (VpnService)"]
+    },
+    {
+      title: "34. 用户认证与生物识别", icon: "👤", color: "c-orange",
+      desc: "Framework 层统一管理指纹、面部、虹膜等生物识别认证。",
+      topics: ["BiometricManager API", "FingerprintService 实现", "FaceManager / FaceService", "BiometricPrompt 统一接口", "Gatekeeper 与锁屏凭据", "ConfirmDeviceCredential", "多因素认证策略", "跨设备认证 (Credential Manager)"]
+    }
+  ],
+  cat7: [
+    {
+      title: "35. Soong / Blueprint 构建系统", icon: "🔨", color: "c-blue",
+      desc: "Android 使用 Soong (Blueprint) 替代传统 Make，基于 Android.bp 声明式构建。",
+      topics: ["Android.bp 语法与模块类型", "cc_library / cc_binary / java_library", "soong_build 与 Blueprint 处理", "Ninja 构建文件生成", "Makefile 遗留兼容 (Android.mk)", "产品配置 (product config)", "构建变量与条件编译", "构建缓存与增量编译优化"]
+    },
+    {
+      title: "36. Framework JAR 与 Boot Classpath", icon: "📚", color: "c-green",
+      desc: "理解 Framework Java 层的模块组成、bootclasspath 加载和 Dex 预优化。",
+      topics: ["framework.jar / framework-oat", "bootclasspath 列表配置", "Dexpreopt 预优化机制", "BOOTCLASSPATH 环境变量", "services.jar (SystemServer)", "ext.jar / updatable-media.jar", "Hidden API 限制与灰名单", "Dex2oat 编译选项"]
+    },
+    {
+      title: "37. 产品配置与 Makefile", icon: "⚙️", color: "c-purple",
+      desc: "AOSP 产品配置决定构建目标设备的系统镜像组成。",
+      topics: ["product / device 配置层次", "AndroidProducts.mk / device.mk", "PRODUCT_PACKAGES 变量", "PRODUCT_COPY_FILES 规则", "inherit-product 继承机制", "分区大小与文件系统配置", "lunch 产品选择", "OTA 包生成与签名"]
+    },
+    {
+      title: "38. 系统分区与升级", icon: "📦", color: "c-orange",
+      desc: "Android 系统分区布局和 OTA 升级机制是 Framework 定制的重要环节。",
+      topics: ["system / vendor / product / odm 分区", "super 动态分区 (Dynamic Partitions)", "Virtual A/B 升级方案", "OTA 包结构与签名", "update_engine 升级流程", "Recovery 模式", "OTA 差分包 (bsdiff/imgdiff)", "Factory Reset Protection (FRP)"]
+    }
+  ],
+  cat8: [
+    {
+      title: "39. dumpsys 与服务调试", icon: "🔍", color: "c-blue",
+      desc: "dumpsys 是调试系统服务最常用的工具，可输出服务内部状态。",
+      topics: ["dumpsys <service> 命令", "服务 dump() 方法实现", "dumpsys activity (AMS 状态)", "dumpsys window (WMS 状态)", "dumpsys package (PMS 状态)", "dumpsys input (IMS 状态)", "dumpsys meminfo (内存信息)", "自定义服务 dump 接口"]
+    },
+    {
+      title: "40. Systrace / Perfetto 系统分析", icon: "📊", color: "c-green",
+      desc: "Systrace 和 Perfetto 是 Android 系统级性能分析的核心工具。",
+      topics: ["Systrace 使用与 HTML 报告", "Perfetto 配置与 trace 分析", "atrace 系统追踪点", "ATRACE_BEGIN / ATRACE_END 宏", "Trace 类 (android.os.Trace)", "CPU 调度分析", "Jank 丢帧分析方法论", "自定义 Trace Category"]
+    },
+    {
+      title: "41. GDB / LLDB Native 调试", icon: "🛠️", color: "c-purple",
+      desc: "Framework Native 层调试需要使用 GDB/LLDB 连接到系统进程。",
+      topics: ["adb forward + gdbserver/lldb-server", "附加到 SystemServer 进程", "Native 堆栈分析 (addr2line)", "tombstone 文件分析", "debuggerd 守护进程", "libbacktrace 堆栈回溯", "asan / hwasan 内存检测", "FORTIFY_SOURCE 缓冲区保护"]
+    },
+    {
+      title: "42. 内存与性能调优", icon: "⚡", color: "c-orange",
+      desc: "Framework 层性能调优涉及内存、CPU、IO 等多个维度。",
+      topics: ["procrank / showmap 内存分析", "malloc_debug 内存泄漏检测", "dmabuf_dump GPU 内存分析", "simpleperf CPU 性能分析", "blktrace / ftrace IO 分析", "CPU 调度策略调优 (cpuset/schedtune)", "SSRAML 内存标记", "Perfetto Heap Profiling"]
+    },
+    {
+      title: "43. 编译调试与热修复", icon: "🔥", color: "c-red",
+      desc: "Framework 开发中的快速编译、增量部署和调试技巧。",
+      topics: ["mm / mma 模块编译", "adb sync 增量推送", "adb remount 可写分区", "push + stop/start 快速验证", "framework.jar 替换与重启", "servicemanager 重启技巧", "frida 动态 hook 框架", "Xposed / EdXposed 框架原理"]
+    }
+  ]
+};
+
+Object.entries(categories).forEach(([catId, data]) => {
+  const container = document.getElementById(catId);
+  data.forEach((branch) => {
+    const div = document.createElement('div');
+    div.className = `branch ${branch.color}`;
+    div.innerHTML = `
+      <div class="branch-header open" onclick="toggle(this)">
+        <div class="branch-icon">${branch.icon}</div>
+        <h3>${branch.title}</h3>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="branch-body open">
+        <div class="branch-content">
+          <div class="branch-desc">${branch.desc}</div>
+          <div class="sub-topics">
+            ${branch.topics.map(t => `<span class="sub-tag">${t}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+});
+
+function toggle(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+</script>
+</body>
+</html>

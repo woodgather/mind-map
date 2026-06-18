@@ -1,0 +1,536 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Android 系统应用开发知识导图 (高级)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0f1724;
+    color: #e0e6ed;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  header {
+    text-align: center;
+    padding: 36px 20px 12px;
+    background: linear-gradient(135deg, #1a2740 0%, #0f1724 100%);
+    border-bottom: 1px solid rgba(100,180,255,0.12);
+  }
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #f093fb, #f5576c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 2px;
+  }
+  header p { margin-top: 8px; font-size: 14px; color: #7a8ba8; }
+  .category-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 24px; margin-top: 28px; margin-bottom: 16px;
+    background: linear-gradient(90deg, rgba(240,147,251,0.08), transparent);
+    border-left: 3px solid;
+    border-radius: 0 8px 8px 0;
+  }
+  .category-header .cat-icon { font-size: 18px; }
+  .category-header h2 { font-size: 18px; font-weight: 700; }
+  .category-header .cat-desc { font-size: 12px; color: #7a8ba8; margin-left: 8px; }
+  .mindmap-container { max-width: 1440px; margin: 0 auto; padding: 30px 20px 60px; }
+  .root-node { display: flex; justify-content: center; margin-bottom: 32px; }
+  .root-card {
+    background: linear-gradient(135deg, #3a1e5f, #5f2a8a);
+    border: 2px solid #f093fb;
+    border-radius: 16px;
+    padding: 18px 40px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(240,147,251,0.25);
+  }
+  .root-card h2 { font-size: 22px; color: #fff; font-weight: 700; }
+  .root-card span { font-size: 12px; color: #d4a0f4; }
+  .branches { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+  .branch {
+    background: #162032;
+    border-radius: 14px;
+    border: 1px solid rgba(100,180,255,0.1);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .branch:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+  .branch-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px; cursor: pointer; user-select: none;
+    border-bottom: 1px solid rgba(100,180,255,0.08);
+  }
+  .branch-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .branch-header h3 { font-size: 15px; font-weight: 600; flex: 1; }
+  .branch-header .arrow { font-size: 18px; color: #5a7a9e; transition: transform 0.25s; }
+  .branch-header.open .arrow { transform: rotate(90deg); }
+  .branch-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+  .branch-body.open { max-height: 3000px; }
+  .branch-content { padding: 14px 18px 18px; }
+  .branch-desc { font-size: 13px; color: #7a8ba8; margin-bottom: 12px; line-height: 1.6; }
+  .sub-topics { display: flex; flex-wrap: wrap; gap: 7px; }
+  .sub-tag { padding: 4px 11px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: default; }
+  .learning-path {
+    margin-top: 36px; background: #162032; border-radius: 14px;
+    border: 1px solid rgba(100,180,255,0.1); padding: 24px;
+  }
+  .learning-path h2 {
+    font-size: 20px; font-weight: 700; margin-bottom: 20px;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .timeline { position: relative; padding-left: 30px; }
+  .timeline::before {
+    content: ''; position: absolute; left: 10px; top: 0; bottom: 0;
+    width: 2px; background: linear-gradient(180deg, #f093fb, #f5576c, #4facfe);
+  }
+  .timeline-item { position: relative; margin-bottom: 24px; padding-left: 20px; }
+  .timeline-item::before {
+    content: ''; position: absolute; left: -24px; top: 6px;
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid #f093fb; background: #0f1724;
+  }
+  .timeline-item h4 { font-size: 15px; font-weight: 600; color: #f093fb; margin-bottom: 4px; }
+  .timeline-item p { font-size: 13px; color: #7a8ba8; line-height: 1.6; }
+  .resources {
+    margin-top: 36px; background: #162032; border-radius: 14px;
+    border: 1px solid rgba(100,180,255,0.1); padding: 24px;
+  }
+  .resources h2 {
+    font-size: 20px; font-weight: 700; margin-bottom: 16px;
+    background: linear-gradient(90deg, #43e97b, #38f9d7);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .resource-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .resource-item {
+    background: rgba(79,172,254,0.06); border: 1px solid rgba(79,172,254,0.1);
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .resource-item strong { color: #4facfe; font-size: 13px; }
+  .resource-item p { font-size: 12px; color: #7a8ba8; margin-top: 4px; }
+  .c-blue .branch-icon { background: rgba(79,172,254,0.15); color: #4facfe; }
+  .c-blue .sub-tag { background: rgba(79,172,254,0.1); color: #7bc4ff; border: 1px solid rgba(79,172,254,0.2); }
+  .c-green .branch-icon { background: rgba(67,233,123,0.12); color: #43e97b; }
+  .c-green .sub-tag { background: rgba(67,233,123,0.1); color: #7cffaa; border: 1px solid rgba(67,233,123,0.2); }
+  .c-purple .branch-icon { background: rgba(160,120,255,0.15); color: #a078ff; }
+  .c-purple .sub-tag { background: rgba(160,120,255,0.1); color: #c0a4ff; border: 1px solid rgba(160,120,255,0.2); }
+  .c-orange .branch-icon { background: rgba(255,170,80,0.15); color: #ffaa50; }
+  .c-orange .sub-tag { background: rgba(255,170,80,0.1); color: #ffc88a; border: 1px solid rgba(255,170,80,0.2); }
+  .c-pink .branch-icon { background: rgba(240,147,251,0.15); color: #f093fb; }
+  .c-pink .sub-tag { background: rgba(240,147,251,0.1); color: #f5b8fc; border: 1px solid rgba(240,147,251,0.2); }
+  .c-cyan .branch-icon { background: rgba(0,242,254,0.12); color: #00f2fe; }
+  .c-cyan .sub-tag { background: rgba(0,242,254,0.1); color: #66f7ff; border: 1px solid rgba(0,242,254,0.2); }
+  .c-red .branch-icon { background: rgba(245,87,108,0.15); color: #f5576c; }
+  .c-red .sub-tag { background: rgba(245,87,108,0.1); color: #f88a9a; border: 1px solid rgba(245,87,108,0.2); }
+  .c-teal .branch-icon { background: rgba(56,249,215,0.12); color: #38f9d7; }
+  .c-teal .sub-tag { background: rgba(56,249,215,0.1); color: #7cfae0; border: 1px solid rgba(56,249,215,0.2); }
+  .c-yellow .branch-icon { background: rgba(250,220,80,0.15); color: #fadc50; }
+  .c-yellow .sub-tag { background: rgba(250,220,80,0.1); color: #fce884; border: 1px solid rgba(250,220,80,0.2); }
+  .c-indigo .branch-icon { background: rgba(100,120,255,0.15); color: #6478ff; }
+  .c-indigo .sub-tag { background: rgba(100,120,255,0.1); color: #8a96ff; border: 1px solid rgba(100,120,255,0.2); }
+  .c-rose .branch-icon { background: rgba(255,100,150,0.15); color: #ff6496; }
+  .c-rose .sub-tag { background: rgba(255,100,150,0.1); color: #ff8ab0; border: 1px solid rgba(255,100,150,0.2); }
+  .c-amber .branch-icon { background: rgba(255,200,60,0.15); color: #ffc83c; }
+  .c-amber .sub-tag { background: rgba(255,200,60,0.1); color: #ffe066; border: 1px solid rgba(255,200,60,0.2); }
+  .c-lime .branch-icon { background: rgba(180,230,80,0.15); color: #b4e650; }
+  .c-lime .sub-tag { background: rgba(180,230,80,0.1); color: #d0f080; border: 1px solid rgba(180,230,80,0.2); }
+  @media (max-width: 700px) {
+    .branches { grid-template-columns: 1fr; }
+    header h1 { font-size: 22px; }
+    .category-header { padding: 10px 16px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Android 系统应用开发知识导图</h1>
+  <p>面向高级系统应用开发者 · 涵盖 SystemUI / Settings / Launcher / 系统级 API / OTA 集成 / 多用户 / 企业管控全栈</p>
+</header>
+<div class="mindmap-container">
+  <div class="root-node">
+    <div class="root-card">
+      <h2>Android System Apps</h2>
+      <span>packages/apps · packages/modules · platform 签名 · privileged 权限 · @hide API</span>
+    </div>
+  </div>
+
+  <div class="category-header" style="border-color: #f093fb;">
+    <span class="cat-icon">🏗️</span>
+    <h2 style="color: #f093fb;">系统应用基础与特权</h2>
+    <span class="cat-desc">平台签名 / 特权权限 / @hide API / 构建集成</span>
+  </div>
+  <div class="branches" id="cat1"></div>
+
+  <div class="category-header" style="border-color: #4facfe;">
+    <span class="cat-icon">📱</span>
+    <h2 style="color: #4facfe;">SystemUI 深度开发</h2>
+    <span class="cat-desc">StatusBar / 通知中心 / 快捷设置 / 锁屏 / 导航栏</span>
+  </div>
+  <div class="branches" id="cat2"></div>
+
+  <div class="category-header" style="border-color: #43e97b;">
+    <span class="cat-icon">⚙️</span>
+    <h2 style="color: #43e97b;">Settings 应用开发</h2>
+    <span class="cat-desc">系统设置 / Preference 框架 / 设备管理 / 子页面注册</span>
+  </div>
+  <div class="branches" id="cat3"></div>
+
+  <div class="category-header" style="border-color: #ffaa50;">
+    <span class="cat-icon">🏠</span>
+    <h2 style="color: #ffaa50;">Launcher 桌面开发</h2>
+    <span class="cat-desc">Launcher3 架构 / Workspace / AppWidget / 拖拽 / 手势</span>
+  </div>
+  <div class="branches" id="cat4"></div>
+
+  <div class="category-header" style="border-color: #f5576c;">
+    <span class="cat-icon">📡</span>
+    <h2 style="color: #f5576c;">系统级通信与 IPC 实战</h2>
+    <span class="cat-desc">隐藏 API 调用 / AIDL 自定义服务 / 跨进程数据流</span>
+  </div>
+  <div class="branches" id="cat5"></div>
+
+  <div class="category-header" style="border-color: #00f2fe;">
+    <span class="cat-icon">👥</span>
+    <h2 style="color: #00f2fe;">多用户与企业管控</h2>
+    <span class="cat-desc">UserManager / DevicePolicyManager / Work Profile / Managed Device</span>
+  </div>
+  <div class="branches" id="cat6"></div>
+
+  <div class="category-header" style="border-color: #a078ff;">
+    <span class="cat-icon">🔗</span>
+    <h2 style="color: #a078ff;">系统集成与 OTA</h2>
+    <span class="cat-desc">预装应用 / Overlay / RRO / APEX / 系统更新</span>
+  </div>
+  <div class="branches" id="cat7"></div>
+
+  <div class="category-header" style="border-color: #38f9d7;">
+    <span class="cat-icon">🧪</span>
+    <h2 style="color: #38f9d7;">系统应用调试与测试</h2>
+    <span class="cat-desc">CTS / VTS / Monkey / 平台签名调试 / 性能测试</span>
+  </div>
+  <div class="branches" id="cat8"></div>
+
+  <div class="learning-path">
+    <h2>系统应用开发学习路线</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <h4>阶段一：系统应用基础与构建</h4>
+        <p>理解 platform 签名、privileged 权限、LOCAL_CERTIFICATE / android:sharedUserId 配置。搭建 AOSP 编译环境，掌握 packages/apps 下的模块构建 (Android.bp / Android.mk)。学习 @hide API 的使用方式 (反射 / 编译时引用 / bootclasspath)。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段二：系统设置与 Preference 框架</h4>
+        <p>以 Settings 应用为切入点，理解 AOSP Settings 的目录结构、DashboardFragment / SettingsPreferenceFragment 体系。学习 Preference 层次化组织、搜索索引 (SearchIndexablesProvider)、子页面动态注册。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段三：SystemUI 与通知系统</h4>
+        <p>深入 SystemUI 源码，理解 StatusBar / NotificationPanel / QuickSettings / LockScreen 的架构。学习 NotificationChannel、通知分发流程、自定义 QS Tile、状态栏图标管理。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段四：Launcher 与桌面定制</h4>
+        <p>阅读 Launcher3 源码，理解 InvariantDeviceProfile、CellLayout、DragLayer、Workspace 的工作原理。学习 AppWidget 管理、应用抽屉实现、拖拽排序、手势导航集成。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段五：多用户、企业管控与安全</h4>
+        <p>理解 UserManager 多用户管理、DevicePolicyManager 企业管控、Work Profile 工作资料。学习设备管理员 (Device Admin) 配置、应用限制策略、跨用户 IPC 通信。</p>
+      </div>
+      <div class="timeline-item">
+        <h4>阶段六：系统集成与发布</h4>
+        <p>学习系统应用的预装配置 (PRODUCT_PACKAGES)、Overlay 资源覆盖 (RRO)、OTA 升级集成。掌握 CTS / VTS 合规测试、平台签名密钥管理、发布流程与版本管理。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="resources">
+    <h2>核心参考资源</h2>
+    <div class="resource-grid">
+      <div class="resource-item"><strong>AOSP Source (cs.android.com)</strong><p>packages/apps/Settings · packages/apps/Launcher3 · frameworks/base/packages/SystemUI</p></div>
+      <div class="resource-item"><strong>source.android.com</strong><p>Google 官方文档：系统应用开发、OTA、多用户、企业管控</p></div>
+      <div class="resource-item"><strong>《Android 系统源代码情景分析》</strong><p>罗升阳 著 — 系统服务与应用交互源码分析</p></div>
+      <div class="resource-item"><strong>AOSP Launcher3 源码</strong><p>packages/apps/Launcher3 — 桌面应用完整实现</p></div>
+      <div class="resource-item"><strong>AOSP SystemUI 源码</strong><p>frameworks/base/packages/SystemUI — 状态栏/通知/锁屏</p></div>
+      <div class="resource-item"><strong>AOSP Settings 源码</strong><p>packages/apps/Settings — 系统设置完整实现</p></div>
+      <div class="resource-item"><strong>CTS / VTS 测试套件</strong><p>source.android.com/compatibility — Android 兼容性测试</p></div>
+      <div class="resource-item"><strong>Android Enterprise 文档</strong><p>developers.android.com/enterprise — 企业设备管理 API</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const categories = {
+  cat1: [
+    {
+      title: "1. 平台签名与权限模型", icon: "🔐", color: "c-blue",
+      desc: "系统应用使用 platform 签名可获得与系统相同的 UID 和权限级别，这是区别于普通应用的核心。",
+      topics: ["platform 签名密钥 (testkeys / release keys)", "android:sharedUserId=\"android.uid.system\"", "LOCAL_CERTIFICATE := platform", "signatureOrSystem 权限获取", "privileged 权限声明 (privapp-permissions.xml)", "/system/priv-app 目录", "SELinux 域 (platform_app / system_app)", "签名轮转与密钥管理"]
+    },
+    {
+      title: "2. @hide API 与 Hidden API 访问", icon: "👁️", color: "c-green",
+      desc: "Android Framework 中大量 @hide 标注的 API 对系统应用可用，但需要特殊方式调用。",
+      topics: ["@hide 注解与 SDK 移除", "Hidden API 灰名单 / 黑名单 / 浅灰名单", "反射调用 @hide API", "编译时引用 framework.jar", "bootclasspath 与 classpath 配置", "corePlatformApi 白名单", "@SystemApi / @TestApi 注解", "Hidden API bypass 技巧 (Android 9+)"]
+    },
+    {
+      title: "3. 系统应用构建与集成", icon: "🔨", color: "c-purple",
+      desc: "系统应用在 AOSP 构建系统中以模块形式存在，需理解 Android.bp 配置与预装机制。",
+      topics: ["Android.bp 模块定义 (android_app)", "LOCAL_PACKAGE_NAME / LOCAL_CERTIFICATE", "LOCAL_PRIVILEGED_MODULE := true", "PRODUCT_PACKAGES 预装变量", "LOCAL_OVERRIDES_PACKAGES 覆盖", "uses_libs / optional_uses_libs", "编译时依赖 (static_libs)", "proguard 与 R8 配置"]
+    },
+    {
+      title: "4. 系统应用 Manifest 高级配置", icon: "📄", color: "c-orange",
+      desc: "系统应用在 AndroidManifest.xml 中可使用普通应用无法声明的属性和权限。",
+      topics: ["android:persistent=\"true\" (常驻进程)", "android:process 系统进程配置", "android:sharedUserId 与 UID 管理", "android:protectionLevel=\"signature|privileged\"", "uses-feature 系统特性声明", "android:directBootAware (直接启动)", "protected-broadcast 声明", "meta-data 与系统配置关联"]
+    },
+    {
+      title: "5. 系统应用生命周期管理", icon: "🔄", color: "c-pink",
+      desc: "系统应用的生命周期与普通应用不同，理解常驻进程、系统广播和重启行为。",
+      topics: ["persistent 应用进程保活机制", "系统应用不可卸载 (除非 root)", "系统广播接收优先级", "BOOT_COMPLETED 与 LOCKED_BOOT_COMPLETED", "系统应用更新机制 (data 分区覆盖)", "系统应用 Crash 与进程重启", "StrictMode 与系统应用豁免", "ANR 超时与系统应用放宽"]
+    },
+    {
+      title: "6. Framework API 直接调用", icon: "📞", color: "c-cyan",
+      desc: "系统应用可通过 Binder 直接调用 Framework 层服务，获取普通应用无法访问的能力。",
+      topics: ["getSystemService() 系统服务获取", "IBinder / IInterface 直接操作", "ServiceManager.getService() 查询", "IActivityManager / IWindowManager 调用", "ContentResolver 系统 Provider 访问", "Settings.System / Settings.Global 读写", "DevicePolicyManager 管控 API", "TelephonyManager 运营商 API"]
+    }
+  ],
+  cat2: [
+    {
+      title: "7. SystemUI 架构总览", icon: "🏗️", color: "c-blue",
+      desc: "SystemUI 是 Android 最复杂的系统应用之一，管理状态栏、通知、锁屏、导航栏等 UI 组件。",
+      topics: ["SystemUIApplication 启动流程", "SystemUI 组件注册 (Dependency Injection)", "SystemUIFactory 工厂模式", "CommandQueue 命令分发", "StatusBarManagerService 交互", "SystemUI 配置资源 (config.xml)", "SystemUI 调试与 dump", "SystemUI 模块化 (SystemUIModule)"]
+    },
+    {
+      title: "8. StatusBar 与状态栏", icon: "📊", color: "c-green",
+      desc: "状态栏显示时间、电量、信号、通知图标等系统信息，是用户最常接触的 UI。",
+      topics: ["StatusBarView 布局结构", "StatusIconContainer 图标管理", "信号图标 (SignalClusterView)", "电池图标 (BatteryMeterView)", "时钟显示 (Clock)", "状态栏图标优先级与排序", "沉浸式状态栏 (透明/渐变)", "刘海屏适配 (DisplayCutout)"]
+    },
+    {
+      title: "9. Notification 通知中心", icon: "🔔", color: "c-purple",
+      desc: "通知中心展示所有通知，支持分组、渠道、快捷回复等高级特性。",
+      topics: ["NotificationPanelView 面板", "NotificationStackScrollLayout 布局", "NotificationEntryManager 管理", "NotificationChannel 渠道机制", "通知分组 (Group / Conversation)", "HeadsUp 浮动通知", "通知快捷操作 (Action / RemoteInput)", "通知历史 (NotificationHistory)"]
+    },
+    {
+      title: "10. Quick Settings 快捷设置", icon: "⚡", color: "c-orange",
+      desc: "快捷设置面板提供 WiFi、蓝牙、亮度等常用开关的快速操作。",
+      topics: ["QSTileHost 管理与注册", "QSTile 基类与状态管理", "自定义 QS Tile 开发", "QSTileImpl handleClick / handleUpdate", "QSPanel 布局与展开", "QSFooter 底部面板", "InternetTile / WifiTile / BluetoothTile", "自定义 QS Tile Service (TileService)"]
+    },
+    {
+      title: "11. 锁屏 (Keyguard)", icon: "🔒", color: "c-pink",
+      desc: "锁屏管理设备安全、生物识别和锁屏界面显示。",
+      topics: ["KeyguardViewMediator 协调器", "KeyguardSecurityView 安全视图", "图案 / PIN / 密码解锁流程", "BiometricPrompt 与锁屏集成", "KeyguardUpdateMonitor 监控器", "锁屏通知显示策略", "锁屏壁纸与 AOD (Always On Display)", "TrustAgent 可信代理"]
+    },
+    {
+      title: "12. 导航栏与手势导航", icon: "👆", color: "c-cyan",
+      desc: "导航栏提供 Back/Home/Recent 操作，Android 10+ 支持全面手势导航。",
+      topics: ["NavigationBarView 导航栏视图", "三按钮导航 (Back/Home/Recents)", "两按钮导航 (Pill)", "手势导航 (EdgeBackGestureHandler)", "BackGesture 手势检测与视觉反馈", "Home 手势 (SwipeUpHandler)", "Recents 手势集成", "导航栏隐藏 / 沉浸模式"]
+    }
+  ],
+  cat3: [
+    {
+      title: "13. Settings 应用架构", icon: "🏗️", color: "c-blue",
+      desc: "AOSP Settings 是系统设置的完整实现，使用 Preference 框架构建层次化配置界面。",
+      topics: ["Settings 主 Activity 入口", "DashboardFragment 框架", "SettingsPreferenceFragment 基类", "SettingsActivity 与 Fragment 管理", "TopLevelSettings 顶级页面", "SettingsDrawerActivity 侧边栏", "搜索索引 (SearchIndexablesProvider)", "子页面动态注册与发现"]
+    },
+    {
+      title: "14. Preference 框架深度", icon: "📋", color: "c-green",
+      desc: "Preference 框架是 Settings 的 UI 基础，理解其层次结构和数据绑定机制。",
+      topics: ["PreferenceGroup 层次结构", "PreferenceScreen / PreferenceCategory", "SwitchPreference / ListPreference", "EditTextPreference / SeekBarPreference", "自定义 Preference 子类", "PreferenceDataStore 自定义存储", "Preference 初始值与持久化", "Preference 可见性动态控制"]
+    },
+    {
+      title: "15. 网络与连接设置", icon: "📡", color: "c-purple",
+      desc: "网络设置涉及 WiFi、移动数据、蓝牙等复杂子系统。",
+      topics: ["WifiSettings2 / NetworkProviderSettings", "MobileNetworkSettings 移动网络", "BluetoothSettings 蓝牙设置", "APN 设置与运营商配置", "VPN 设置 (VpnSettings)", "热点设置 (WifiTetherSettings)", "流量管理 (DataUsageSummary)", "eSIM / SIM 管理"]
+    },
+    {
+      title: "16. 安全与隐私设置", icon: "🛡️", color: "c-orange",
+      desc: "安全设置管理锁屏、加密、权限和隐私保护。",
+      topics: ["SecuritySettings 安全设置", "锁屏方式配置 (ChooseLockGeneric)", "加密设置 (CryptKeeper)", "应用权限管理 (PermissionController)", "隐私仪表盘 (Privacy Dashboard)", "位置权限与精确/模糊定位", "广告 ID 与跟踪控制", "安全更新状态显示"]
+    },
+    {
+      title: "17. 显示与声音设置", icon: "🎨", color: "c-pink",
+      desc: "显示和声音设置影响用户体验的核心维度。",
+      topics: ["DisplaySettings 显示设置", "亮度调节 (BrightnessController)", "字体大小与显示大小", "刷新率设置 (ScreenRefreshRate)", "色彩模式 / 暗色模式", "SoundSettings 声音设置", "音量控制 (VolumeDialogController)", "铃声与振动模式"]
+    },
+    {
+      title: "18. 开发者选项与调试设置", icon: "🔧", color: "c-cyan",
+      desc: "开发者选项提供 ADB 调试、GPU 渲染、布局边界等高级功能。",
+      topics: ["DevelopmentSettingsEnabler 启用机制", "USB 调试开关", "OEM 解锁 / Bootloader 解锁", "GPU 渲染模式 / 过度绘制", "布局边界显示 (Show Layout Bounds)", "模拟位置 (Mock Location)", "不保留活动 / 后台进程限制", "系统追踪 (System Tracing)"]
+    }
+  ],
+  cat4: [
+    {
+      title: "19. Launcher3 架构解析", icon: "🏠", color: "c-blue",
+      desc: "Launcher3 是 AOSP 的默认桌面应用，理解其架构是桌面定制的基础。",
+      topics: ["LauncherAppState 全局状态", "LauncherModel 数据模型", "LauncherProvider 数据库", "InvariantDeviceProfile 设备配置", "CellLayout 网格布局", "Workspace 多页工作区", "DragLayer 拖拽层", "AllAppsList 应用列表"]
+    },
+    {
+      title: "20. 桌面数据模型", icon: "🗃️", color: "c-green",
+      desc: "桌面数据包括图标位置、文件夹、小部件等，存储在本地数据库中。",
+      topics: ["LauncherSettings 数据库表", "ItemInfo 基类 / LauncherInfo / FolderInfo", "屏幕布局 (ScreenId / CellX / CellY)", "Favorites 表结构", "数据加载 (LoaderTask)", "数据变更通知 (Callbacks)", "数据库升级 (Migration)", "备份与恢复"]
+    },
+    {
+      title: "21. 拖拽与交互", icon: "👆", color: "c-purple",
+      desc: "桌面的拖拽交互包括图标排序、文件夹创建、小部件放置等。",
+      topics: ["DragController 拖拽控制器", "DragSource / DropTarget 接口", "DragView 拖拽视图", "图标拖拽排序", "拖拽创建文件夹", "小部件拖拽放置", "拖拽删除 (Uninstall/Remove)", "拖拽动画与视觉反馈"]
+    },
+    {
+      title: "22. AppWidget 小部件", icon: "🔲", color: "c-orange",
+      desc: "AppWidget 是 Android 桌面小部件机制，Launcher 负责其添加、布局和更新。",
+      topics: ["AppWidgetHost 与 AppWidgetHostView", "AppWidgetManager 管理", "AppWidgetProviderInfo 配置", "小部件选择与添加流程", "RemoteViews 更新机制", "小部件尺寸与布局约束", "小部件预览图 (previewLayout)", "Android 12+ 小部件改进 (Glance)"]
+    },
+    {
+      title: "23. 搜索与负一屏", icon: "🔍", color: "c-pink",
+      desc: "桌面搜索集成应用搜索、网络搜索和操作建议。",
+      topics: ["SearchBarView 搜索栏", "AllAppsContainerView 应用搜索", "SearchProvider 接口", "Google 搜索集成", "负一屏 (Overlay / Left Page)", "AppPredictionService 应用预测", "操作建议 (Shortcuts / DeepLinks)", "语音助手集成 (VoiceInteractionSession)"]
+    },
+    {
+      title: "24. 手势与动画", icon: "✨", color: "c-cyan",
+      desc: "桌面手势包括滑动翻页、双击锁屏、下拉通知等。",
+      topics: ["Workspace 滑动翻页", "双指捏合缩放 (Pinch-to-Zoom)", "下拉通知面板手势", "上滑应用抽屉", "长按菜单 (OptionsPopupView)", "图标动画 (SpringAnimation)", "转场动画 (Activity Transition)", "LauncherState 状态机"]
+    }
+  ],
+  cat5: [
+    {
+      title: "25. 隐藏 API 调用策略", icon: "🔑", color: "c-blue",
+      desc: "系统应用需要大量调用 @hide API，理解调用策略和风险规避至关重要。",
+      topics: ["@hide API 分类 (core / system / unsupported)", "Hidden API 灰名单机制 (Android 9+)", "反射调用与性能影响", "编译时 framework.jar 引用", "bootclasspath 直接访问", "Hidden API bypass 实现原理", "@TestApi 与测试 API", "API 兼容性维护策略"]
+    },
+    {
+      title: "26. AIDL 自定义系统服务", icon: "🔌", color: "c-green",
+      desc: "系统应用可以注册自定义系统服务供其他应用调用，实现跨进程功能。",
+      topics: ["AIDL 接口定义与编译", "服务端实现 (extends Stub)", "ServiceManager.addService() 注册", "客户端 getService() 调用", "服务权限保护", "oneway 异步回调", "Parcelable 自定义数据类型", "服务版本管理与兼容性"]
+    },
+    {
+      title: "27. 系统广播与事件监听", icon: "📢", color: "c-purple",
+      desc: "系统应用可接收普通应用无法接收的受保护广播，这是系统应用的重要特权。",
+      topics: ["protected-broadcast 机制", "ACTION_BOOT_COMPLETED", "ACTION_PACKAGE_ADDED / REMOVED", "ACTION_USER_PRESENT / SCREEN_ON", "ACTION_BATTERY_CHANGED", "ACTION_LOCALE_CHANGED", "隐式广播限制的豁免", "有序广播与优先级控制"]
+    },
+    {
+      title: "28. ContentProvider 系统数据访问", icon: "🔗", color: "c-orange",
+      desc: "系统应用可访问系统级 ContentProvider，获取联系人、短信、媒体等敏感数据。",
+      topics: ["ContactsContract 联系人 Provider", "Telephony.Sms 短信 Provider", "MediaStore 媒体 Provider", "CallLog 通话记录 Provider", "CalendarContract 日历 Provider", "Settings.System/Secure/Global Provider", "跨用户 ContentProvider 访问", "权限提升与数据保护"]
+    },
+    {
+      title: "29. 系统属性与配置读取", icon: "⚙️", color: "c-pink",
+      desc: "系统应用可读写系统属性和配置，控制设备行为。",
+      topics: ["SystemProperties.get / set", "persist.* 持久属性", "ro.* 只读属性", "sys.* 系统属性", "config.xml 系统配置资源", "Settings.Global / Secure / System", "DeviceConfig (Feature Flags)", "Resource Overlay 配置覆盖"]
+    }
+  ],
+  cat6: [
+    {
+      title: "30. UserManager 多用户管理", icon: "👥", color: "c-blue",
+      desc: "Android 支持多用户，系统应用需理解用户类型和跨用户交互。",
+      topics: ["UserManager 用户管理", "主用户 (User 0) / 次要用户", "访客用户 (Guest)", "用户创建与删除流程", "用户切换与前台用户", "跨用户 Intent 与权限", "用户属性 (UserInfo / UserProperties)", "用户加密与解锁状态"]
+    },
+    {
+      title: "31. DevicePolicyManager 企业管控", icon: "🏢", color: "c-green",
+      desc: "DPM 提供设备管理员 API，实现企业级设备管控策略。",
+      topics: ["DeviceAdminReceiver 设备管理员", "DeviceOwner / ProfileOwner", "设备加密策略", "应用安装/卸载限制", "密码策略与复杂度要求", "相机/截屏/USB 控制", "网络代理与 VPN 强制", "应用白名单/黑名单"]
+    },
+    {
+      title: "32. Work Profile 工作资料", icon: "💼", color: "c-purple",
+      desc: "Work Profile 在同一设备上隔离工作应用和个人应用，是 BYOD 方案的核心。",
+      topics: ["Work Profile 创建与管理", "CrossProfileApps 跨 Profile 通信", "工作应用标记与过滤", "数据隔离 (存储/联系人/剪贴板)", "Work Challenge 工作解锁", "应用白名单 (managed_profiles)", "跨 Profile Intent 过滤", "工作资料删除与擦除"]
+    },
+    {
+      title: "33. Managed Device 托管设备", icon: "📱", color: "c-orange",
+      desc: "Managed Device 模式下设备完全由企业管控，用于专用设备场景。",
+      topics: ["Device Owner 设置方式 (NFC/QR/Zero-Touch)", "Kiosk 模式 (LockTask)", "系统更新策略控制", "网络配置强制 (WiFi/VPN)", "应用静默安装/卸载", "出厂重置保护", "合规性检查 (Compliance)", "Android Enterprise Recommended"]
+    },
+    {
+      title: "34. Accessibility 系统级辅助功能", icon: "♿", color: "c-pink",
+      desc: "系统级无障碍服务影响全局 UI 交互，系统应用可深度集成辅助功能。",
+      topics: ["AccessibilityService 框架", "AccessibilityEvent 事件监听", "AccessibilityNodeInfo 节点操作", "TalkBack 集成与适配", "Switch Access / Voice Access", "全局手势 (GlobalActions)", "屏幕放大 (MagnificationController)", "Accessibility 指南与合规"]
+    }
+  ],
+  cat7: [
+    {
+      title: "35. 系统应用预装配置", icon: "📦", color: "c-blue",
+      desc: "系统应用通过 AOSP 构建系统预装到设备中，需理解分区和配置。",
+      topics: ["PRODUCT_PACKAGES 预装变量", "/system/app 与 /system/priv-app 区别", "预装第三方应用 (preload_apps)", "LOCAL_MODULE_PATH 安装路径", "预装应用权限声明", "预装应用更新机制", "预装应用可卸载配置", "ODM / OEM 分区预装"]
+    },
+    {
+      title: "36. Resource Overlay (RRO)", icon: "🎨", color: "c-green",
+      desc: "RRO (Runtime Resource Overlay) 允许在不修改源码的情况下覆盖系统应用资源。",
+      topics: ["RRO 基本原理与机制", "overlay AndroidManifest.xml 配置", "targetPackage 与 targetName", "资源覆盖优先级", "静态 RRO vs 动态 RRO", "OverlayManagerService 管理", "Overlay 与 OEM 定制", "Overlay 调试 (cmd overlay)"]
+    },
+    {
+      title: "37. APEX 模块集成", icon: "📦", color: "c-purple",
+      desc: "APEX 是 Android 10+ 的模块化更新机制，系统应用可作为 APEX 模块独立更新。",
+      topics: ["APEX 包结构与组成", "apex_manifest.json 配置", "APEX 内的 APK 打包", "APEX 签名与验证", "APEX 更新与回滚", "Mainline 模块列表", "Google Play System Updates", "APEX 与系统应用的关系"]
+    },
+    {
+      title: "38. OTA 升级与系统更新", icon: "🔄", color: "c-orange",
+      desc: "系统应用随 OTA 升级更新，需理解升级流程和数据迁移。",
+      topics: ["OTA 包结构与签名", "update_engine 升级流程", "Virtual A/B 升级方案", "系统应用数据迁移", "数据库升级 (Room Migration)", "SharedPreferences 兼容", "分区保留与数据保留", "回滚保护 (Rollback Protection)"]
+    },
+    {
+      title: "39. 系统应用版本管理", icon: "📋", color: "c-pink",
+      desc: "系统应用的版本管理涉及 SDK 版本、构建号和兼容性。",
+      topics: ["versionCode / versionName 管理", "minSdkVersion / targetSdkVersion", "平台 API Level 兼容", "Build.VERSION.SDK_INT 判断", "特性标志 (Feature Flag)", "A/B 测试集成", "构建变体 (Build Variant)", "发布节奏与 OTA 协调"]
+    }
+  ],
+  cat8: [
+    {
+      title: "40. 平台签名调试", icon: "🛠️", color: "c-blue",
+      desc: "系统应用使用平台签名，调试时需特殊配置。",
+      topics: ["adb root 与 userdebug 版本", "adb shell am start 调试启动", "Android Studio 连接系统进程", "平台签名密钥配置 (debug.keystore)", "logcat 系统应用日志过滤", "dumpsys 查看系统服务状态", "adb shell cmd 命令调试", "系统应用断点调试 (JDWP)"]
+    },
+    {
+      title: "41. CTS / VTS 合规测试", icon: "✅", color: "c-green",
+      desc: "Android 兼容性测试套件 (CTS) 和供应商测试套件 (VTS) 确保设备兼容性。",
+      topics: ["CTS 测试套件结构", "CTS 测试执行与结果分析", "VTS (Vendor Test Suite)", "GTS (GMS Test Suite)", "STS (Security Test Suite)", "CTS-on-GSI 测试", "系统应用相关 CTS 用例", "CTS 失败修复策略"]
+    },
+    {
+      title: "42. Monkey 与压力测试", icon: "🐒", color: "c-purple",
+      desc: "Monkey 工具通过随机事件压力测试系统应用的稳定性。",
+      topics: ["adb shell monkey 命令", "事件类型 (触摸/滑动/按键/系统)", "种子与可复现测试", "Throttle 事件间隔", "崩溃日志分析 (ANR/Crash)", "自定义 Monkey 脚本", "稳定性测试策略", "长时间运行测试 (Soak Test)"]
+    },
+    {
+      title: "43. UI 测试与自动化", icon: "🤖", color: "c-orange",
+      desc: "系统应用的 UI 测试需要特殊权限和工具支持。",
+      topics: ["Espresso UI 测试框架", "UI Automator 系统级测试", "UiDevice / UiObject2 操作", "ShellCommandAutomation", "Instrumentation 测试配置", "系统应用测试签名配置", "跨应用测试 (跨 Activity)", "CI/CD 集成与自动回归"]
+    },
+    {
+      title: "44. 性能测试与优化", icon: "⚡", color: "c-red",
+      desc: "系统应用的性能直接影响用户体验，需系统级性能分析。",
+      topics: ["启动时间测试 (cold/warm/hot)", "UI 流畅度测试 (Jank)", "内存泄漏检测 (LeakCanary / MAT)", "电量消耗分析 (Battery Historian)", "包体积优化 (R8 / resource shrink)", "数据库查询优化", "列表滚动性能 (RecyclerView)", "系统应用 ANR 分析"]
+    }
+  ]
+};
+
+Object.entries(categories).forEach(([catId, data]) => {
+  const container = document.getElementById(catId);
+  data.forEach((branch) => {
+    const div = document.createElement('div');
+    div.className = `branch ${branch.color}`;
+    div.innerHTML = `
+      <div class="branch-header open" onclick="toggle(this)">
+        <div class="branch-icon">${branch.icon}</div>
+        <h3>${branch.title}</h3>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="branch-body open">
+        <div class="branch-content">
+          <div class="branch-desc">${branch.desc}</div>
+          <div class="sub-topics">
+            ${branch.topics.map(t => `<span class="sub-tag">${t}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+});
+
+function toggle(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+</script>
+</body>
+</html>

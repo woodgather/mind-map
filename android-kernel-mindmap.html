@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -79,12 +79,12 @@
   }
   .timeline { position: relative; padding-left: 30px; }
   .timeline::before {
-    content: ''; position: absolute; left: 10px; top: 0; bottom: 0;
+    content: ""; position: absolute; left: 10px; top: 0; bottom: 0;
     width: 2px; background: linear-gradient(180deg, #4facfe, #00f2fe, #f093fb);
   }
   .timeline-item { position: relative; margin-bottom: 24px; padding-left: 20px; }
   .timeline-item::before {
-    content: ''; position: absolute; left: -24px; top: 6px;
+    content: ""; position: absolute; left: -24px; top: 6px;
     width: 12px; height: 12px; border-radius: 50%;
     border: 2px solid #4facfe; background: #0f1724;
   }
@@ -186,12 +186,12 @@
 <script>
 const data = [
   {
-    title: "1. 内核基础架构", icon: "🏗", color: "c-blue",
-    desc: "理解 Linux/Android 内核的整体架构与构建系统，是所有后续学习的地基。",
+    title: "1. 内核基础架构", icon: "🧱", color: "c-blue",
+    desc: "理解 Linux/Android 内核的整体架构与构建系统，是所有后续学习的根基。",
     topics: ["内核源码目录结构","Kconfig / Makefile 构建系统","内核模块（.ko）机制","系统调用接口（syscall）","内核态与用户态切换","GKI (Generic Kernel Image) 架构","内核版本与分支管理","设备树（DTS/DTB）基础"]
   },
   {
-    title: "2. 进程与调度管理", icon: "⚙️", color: "c-green",
+    title: "2. 进程与调度管理", icon: "⚡", color: "c-green",
     desc: "Android 依赖 Linux 进程调度实现多任务、优先级管理和前台体验保障。",
     topics: ["task_struct 与进程描述符","CFS 调度器原理","EAS（能量感知调度）","WALT 算法","cgroup 与 cpuset","进程优先级（nice/rt）","Android 进程生命周期","OOM Killer 与 LMKD","Binder 线程池调度"]
   },
@@ -201,7 +201,7 @@ const data = [
     topics: ["虚拟内存与页表","伙伴系统（Buddy System）","Slab 分配器","vmalloc / kmalloc","页面回收（kswapd/direct reclaim）","ZRAM 压缩","KSM（内核同页合并）","ION / DMA-BUF 内存分配","CMA（连续内存分配）","内存映射（mmap）","Low Memory Killer"]
   },
   {
-    title: "4. 文件系统与存储", icon: "📁", color: "c-orange",
+    title: "4. 文件系统与存储", icon: "📂", color: "c-orange",
     desc: "Android 使用多种文件系统管理不同存储分区和数据。",
     topics: ["VFS（虚拟文件系统）层","EXT4 / F2FS","EROFS（只读压缩文件系统）","sdcardfs / FUSE","procfs / sysfs / debugfs","块设备与 I/O 调度","dm-verity / dm-crypt","FBE（文件级加密）","Storage 框架与 vold"]
   },
@@ -216,7 +216,7 @@ const data = [
     topics: ["字符/块/网络设备驱动","platform_driver 模型","设备树绑定（DTS binding）","中断处理（IRQ/Softirq/Tasklet）","DMA 传输","I2C / SPI / UART 驱动","GPIO / Pinctrl 子系统","Regulator / Clock 框架","DRM/KMS 显示驱动","V4L2 摄像头驱动","ALSA/ASoC 音频驱动","Input 子系统"]
   },
   {
-    title: "7. 网络子系统", icon: "🌐", color: "c-red",
+    title: "7. 网络子系统", icon: "🌍", color: "c-red",
     desc: "Android 网络栈基于 Linux 网络子系统，增加了 WiFi、移动数据等特有支持。",
     topics: ["socket 层与协议栈","TCP/IP 协议族实现","Netfilter / iptables / eBPF","WiFi 驱动（cfg80211/mac80211）","网络命名空间","Traffic Control","netd 与 ConnectivityService","DNS 解析与网络切换"]
   },
@@ -226,7 +226,7 @@ const data = [
     topics: ["suspend / resume 流程","wakelocks 机制","runtime PM","CPU idle / cpufreq governor","thermal 框架（thermal_zone）","Power Supply 驱动","充电管理（charger driver）","DVFS 动态调频调压","doze 模式内核支持"]
   },
   {
-    title: "9. 安全机制", icon: "🛡", color: "c-yellow",
+    title: "9. 安全机制", icon: "🛡️", color: "c-yellow",
     desc: "Android 安全纵深防御体系中，内核层是最后一道防线。",
     topics: ["SELinux / SEAndroid 策略","Capabilities 机制","Seccomp 过滤","dm-verity / AVB（Verified Boot）","KASLR / KCFI","内核漏洞类型与 CVE 分析","Android 安全公告（ASB）","TrustZone / TEE 交互","namespace 隔离"]
   }
