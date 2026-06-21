@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Android 16 SystemUI Knowledge Graph</title>
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #181b22;
+  --surface2: #1e222b;
+  --border: #2a2e39;
+  --text: #e1e4ea;
+  --text2: #9ba1b0;
+  --accent: #7cacf8;
+  --radius: 8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; }
+#app { display: grid; grid-template-columns: 320px 1fr 360px; grid-template-rows: 52px 1fr; height: 100vh; }
+header { grid-column: 1/-1; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 14px; z-index: 100; }
+header h1 { font-size: 17px; font-weight: 600; white-space: nowrap; }
+header h1 span { color: var(--accent); }
+#search { flex: 1; max-width: 360px; padding: 7px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 13px; outline: none; }
+#search:focus { border-color: var(--accent); }
+#search::placeholder { color: var(--text2); }
+.stats { display: flex; gap: 14px; font-size: 12px; color: var(--text2); white-space: nowrap; }
+.stats b { color: var(--accent); }
+.view-toggle { display: flex; gap: 3px; }
+.view-toggle button { padding: 5px 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text2); cursor: pointer; font-size: 12px; }
+.view-toggle button.active { background: var(--accent); color: #000; border-color: var(--accent); }
+#sidebar { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 10px 0; }
+#sidebar::-webkit-scrollbar { width: 5px; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.cat-header { display: flex; align-items: center; gap: 7px; padding: 7px 14px; cursor: pointer; font-size: 13px; font-weight: 600; user-select: none; transition: background 0.15s; }
+.cat-header:hover { background: var(--surface2); }
+.cat-header .arrow { font-size: 9px; width: 14px; text-align: center; transition: transform 0.2s; color: var(--text2); }
+.cat-header .arrow.open { transform: rotate(90deg); }
+.cat-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.cat-count { margin-left: auto; font-size: 10px; color: var(--text2); font-weight: 400; }
+.children { display: none; padding-left: 14px; }
+.children.open { display: block; }
+.node-item { display: flex; align-items: center; gap: 5px; padding: 4px 14px 4px 18px; font-size: 12px; cursor: pointer; transition: background 0.15s; color: var(--text2); border-left: 2px solid transparent; }
+.node-item:hover { background: var(--surface2); color: var(--text); }
+.node-item.active { background: rgba(124,172,248,0.1); color: var(--accent); border-left-color: var(--accent); }
+.node-item .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; opacity: 0.6; }
+#graph-area { position: relative; overflow: hidden; background: var(--bg); }
+#graph-container { width: 100%; height: 100%; }
+svg { width: 100%; height: 100%; }
+.link { stroke: #2a2e39; stroke-opacity: 0.6; }
+.node circle { stroke-width: 2; cursor: pointer; }
+.node text { font-size: 10px; fill: var(--text2); pointer-events: none; text-anchor: middle; }
+.graph-controls { position: absolute; bottom: 14px; left: 14px; display: flex; gap: 5px; }
+.graph-controls button { width: 32px; height: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.graph-controls button:hover { background: var(--surface2); }
+#detail { background: var(--surface); border-left: 1px solid var(--border); overflow-y: auto; }
+#detail::-webkit-scrollbar { width: 5px; }
+#detail::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.detail-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text2); font-size: 13px; text-align: center; padding: 18px; }
+.detail-header { padding: 18px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 10; }
+.detail-header h2 { font-size: 17px; margin-bottom: 5px; display: flex; align-items: center; gap: 7px; }
+.detail-header .tag { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 500; }
+.detail-header .desc { font-size: 12px; color: var(--text2); line-height: 1.6; margin-top: 7px; }
+.detail-section { padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.detail-section h3 { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 9px; }
+.detail-section ul { list-style: none; }
+.detail-section li { font-size: 12px; padding: 3px 0; display: flex; align-items: flex-start; gap: 5px; line-height: 1.5; }
+.detail-class { padding: 10px 18px; border-bottom: 1px solid var(--border); }
+.detail-class code { font-size: 11px; background: var(--surface2); padding: 2px 7px; border-radius: 4px; color: var(--accent); font-family: 'Cascadia Code', 'Fira Code', monospace; }
+.detail-class .cls-label { font-size: 11px; color: var(--text2); margin-bottom: 5px; }
+.relations { padding: 14px 18px; }
+.relations h3 { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 9px; }
+.rel-item { display: inline-block; padding: 3px 9px; background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; font-size: 11px; margin: 2px 3px 2px 0; cursor: pointer; transition: all 0.15s; }
+.rel-item:hover { border-color: var(--accent); color: var(--accent); }
+.tooltip { position: fixed; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 12px; font-size: 12px; pointer-events: none; z-index: 1000; max-width: 280px; box-shadow: 0 4px 18px rgba(0,0,0,0.4); }
+.tooltip strong { color: var(--accent); }
+#list-view { display: none; overflow-y: auto; padding: 18px; }
+#list-view.active { display: block; }
+#graph-area.hidden { display: none; }
+.list-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; cursor: pointer; transition: all 0.15s; }
+.list-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.list-card h3 { font-size: 14px; margin-bottom: 5px; display: flex; align-items: center; gap: 7px; }
+.list-card p { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.cat-group-title { font-size: 18px; font-weight: 700; margin: 20px 0 10px; padding-bottom: 7px; border-bottom: 2px solid var(--border); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Android 16 <span>SystemUI</span> Knowledge Graph</h1>
+    <input type="text" id="search" placeholder="Search features, class names, keywords...">
+    <div class="stats">
+      <span>Modules: <b id="s-cats">0</b></span>
+      <span>Features: <b id="s-nodes">0</b></span>
+      <span>Relations: <b id="s-links">0</b></span>
+    </div>
+    <div class="view-toggle">
+      <button class="active" onclick="switchView('graph')">Graph</button>
+      <button onclick="switchView('list')">List</button>
+    </div>
+  </header>
+  <div id="sidebar"></div>
+  <div id="graph-area"><div id="graph-container"><svg id="graph-svg"></svg></div>
+    <div class="graph-controls">
+      <button onclick="zIn()" title="Zoom In">+</button>
+      <button onclick="zOut()" title="Zoom Out">-</button>
+      <button onclick="zReset()" title="Reset">⟲</button>
+    </div>
+  </div>
+  <div id="list-view"></div>
+  <div id="detail"><div class="detail-empty"><div><div style="font-size:36px;margin-bottom:10px;">📋</div>Click any node<br>to view details</div></div></div>
+</div>
+<script>
+// ======================== DATA ========================
+const C = [
+ {id:"statusbar",name:"StatusBar 状态栏",c:"#7cacf8",css:"c1",
+  desc:"屏幕顶部状态栏，显示时间、电量、信号、通知图标等系统信息",
+  children:[
+   {id:"sb_window",name:"StatusBarWindow",cls:"StatusBarWindowView",desc:"状态栏顶层窗口容器，管理状态栏布局和触摸事件分发",
+    f:["管理状态栏窗口创建和生命周期","处理状态栏区域触摸事件","协调状态栏与导航栏布局","支持刘海屏Cutout区域适配","管理状态栏显示/隐藏动画"],r:["sb_icon_ctrl","sb_state","shade_panel"]},
+   {id:"sb_icon_ctrl",name:"StatusBarIconController",cls:"StatusBarIconControllerImpl",desc:"状态栏图标控制器，管理系统图标和通知图标的显示/隐藏",
+    f:["管理WiFi/信号/蓝牙等系统图标","控制通知小图标显示","支持图标优先级排序","处理暗色/亮色图标模式切换","StatusBarSignalPolicy信号图标策略"],r:["sb_window","sb_dark_icon","sb_light_icon","notif_icons"]},
+   {id:"sb_state",name:"StatusBarStateController",cls:"StatusBarStateControllerImpl",desc:"状态栏状态机，管理SHADE/KEYGUARD/SHADE_LOCKED三种状态切换",
+    f:["SHADE状态(正常桌面/下拉)","KEYGUARD状态(锁屏)","SHADE_LOCKED状态(锁屏下拉)","状态切换动画协调","监听状态变化回调"],r:["sb_window","lockscreen","shade_panel"]},
+   {id:"sb_dark_icon",name:"DarkIconManager",cls:"DarkIconManager",desc:"暗色图标管理器，在浅色壁纸上使用深色状态栏图标",
+    f:["管理深色系状态栏图标","处理Tint颜色适配","配合LightBarController切换"],r:["sb_icon_ctrl","sb_light_icon","light_bar"]},
+   {id:"sb_light_icon",name:"LightIconManager",cls:"LightIconManager",desc:"亮色图标管理器，在深色壁纸上使用白色/浅色状态栏图标",
+    f:["管理浅色系状态栏图标","配合壁纸颜色自动切换","处理不同DPI下图标渲染"],r:["sb_icon_ctrl","sb_dark_icon","light_bar"]},
+   {id:"sb_operator",name:"运营商名称",cls:"OperatorNameView",desc:"状态栏上显示的运营商名称文字",
+    f:["显示SIM卡对应运营商名称","支持双卡双待显示","跟随SIM卡状态动态更新"],r:["sb_window","sb_icon_ctrl"]},
+   {id:"light_bar",name:"LightBarController",cls:"LightBarController",desc:"控制状态栏图标颜色模式(深色/浅色)，根据壁纸和前台应用自动切换",
+    f:["根据壁纸颜色自动切换深浅色模式","监听前台应用状态栏颜色请求","协调导航栏按钮颜色","处理半透明状态栏场景"],r:["sb_dark_icon","sb_light_icon","shade_panel"]},
+   {id:"battery_view",name:"电池指示器",cls:"BatteryMeterView / BatteryController",desc:"状态栏中的电池图标和百分比显示",
+    f:["电池图标形状/颜色随电量变化","充电状态动画","电池百分比数字显示","省电模式指示","估算剩余使用时间"],r:["sb_window","power_ui"]},
+   {id:"clock_view",name:"状态栏时钟",cls:"Clock / StatusIconContainer",desc:"状态栏左侧/中间的时钟显示",
+    f:["12/24小时制切换","秒数显示(开发者选项)","网络时间自动同步","时区变化响应"],r:["sb_window"]}
+  ]},
+ {id:"notification",name:"Notification 通知系统",c:"#a78bfa",css:"c2",
+  desc:"完整的通知管理框架，包括通知展示、交互、排序、历史记录等",
+  children:[
+   {id:"notif_stack",name:"NotificationStackScrollLayout",cls:"NotificationStackScrollLayout",desc:"通知列表核心布局容器，管理所有通知的滚动、展开、折叠和动画",
+    f:["垂直滚动通知列表","通知展开/折叠手势","Ambient State高度计算","通知间距和分组视觉","OverScroll回弹效果","通知数量限制(显示N+剩余M条)","Shade空状态视图"],r:["notif_panel","notif_entry","notif_expand"]},
+   {id:"notif_panel",name:"NotificationPanelView",cls:"NotificationPanelViewController",desc:"通知面板视图控制器，管理通知面板的下拉、展开和关闭手势",
+    f:["下拉展开手势处理","面板展开/收起动画","Fling快速滑动手势","双指下拉展开快速设置","面板锁定(不可关闭状态)"],r:["notif_stack","shade_panel","qs_panel"]},
+   {id:"notif_entry",name:"NotificationEntry / Row",cls:"NotificationEntry / ExpandableNotificationRow",desc:"单条通知的数据模型和行视图",
+    f:["NotificationEntry数据绑定","通知行高度计算","通知行滑动操作(左右)","通知行点击展开详情","通知行长按菜单"],r:["notif_stack","notif_actions","notif_expand"]},
+   {id:"notif_hu",name:"HeadsUp 顶部弹出",cls:"HeadsUpManager / HeadsUpAppearanceController",desc:"应用通知到达时从顶部弹出的悬浮通知条",
+    f:["顶部悬浮通知展示","自动超时消失","手动上划关闭","点击展开完整通知","HeadsUp触发条件判断","PinnedHeadsUp固定置顶"],r:["notif_entry","notif_stack","shade_panel"]},
+   {id:"notif_channels",name:"通知渠道",cls:"NotificationChannel / NotificationChannelGroup",desc:"通知分类机制，应用可定义多个通知渠道",
+    f:["NotificationChannel渠道定义","NotificationChannelGroup渠道组","渠道重要性级别(NONE/MIN/LOW/DEFAULT/HIGH)","渠道声音/震动/LED设置","渠道免打扰绕过设置","用户可独立控制每个渠道"],r:["notif_entry","notif_permission"]},
+   {id:"notif_actions",name:"通知操作",cls:"ActionListLayout",desc:"通知底部的操作按钮和内联回复",
+    f:["通知Action按钮(最多3个)","内联回复(Inline Reply)","Smart Reply智能回复建议","回复历史记录","操作按钮图标和文字"],r:["notif_entry","notif_messaging"]},
+   {id:"notif_expand",name:"通知展开样式",cls:"ExpandableNotificationRow",desc:"通知的展开视图，支持BigText/BigPicture/Inbox/Messaging等样式",
+    f:["BigTextStyle大文字样式","BigPictureStyle大图片样式","InboxStyle收件箱样式","MessagingStyle消息对话样式","CustomContentView自定义视图","折叠/展开状态切换"],r:["notif_entry","notif_messaging"]},
+   {id:"notif_messaging",name:"消息通知",cls:"ConversationLayout",desc:"对话类通知，突出显示人与人的对话",
+    f:["ConversationLayout对话布局","联系人头像显示","消息气泡式展示","Bubbles气泡通知关联","设置为优先对话","对话快捷方式"],r:["notif_expand","bubbles_ctrl","notif_actions"]},
+   {id:"notif_groups",name:"通知分组",cls:"GroupExpansionManager",desc:"同一应用的多条通知自动分组显示",
+    f:["自动按GroupKey分组","展开/折叠组","组摘要通知","组内通知数量标记","Bundle捆绑通知"],r:["notif_stack","notif_entry"]},
+   {id:"notif_snooze",name:"通知延后",cls:"NotificationSnooze",desc:"将通知暂时延后，一段时间后重新提醒",
+    f:["滑动操作触发延后","延后时间选择(15min/30min/1h/2h)","自定义延后时间","延后通知队列管理"],r:["notif_entry","notif_stack"]},
+   {id:"notif_history",name:"通知历史",cls:"NotificationHistoryManager",desc:"查看已关闭或已处理的通知历史记录",
+    f:["最近通知记录查看","通知历史分类","从设置中访问","通知敏感内容隐藏选项"],r:["notif_entry","notif_channels"]},
+   {id:"notif_dots",name:"通知圆点",cls:"NotificationDotView",desc:"应用图标上的未读通知小圆点",
+    f:["圆点颜色跟随主题","长按显示通知预览","圆点数量指示","可通过设置关闭"],r:["notif_entry","notif_stack"]},
+   {id:"notif_digest",name:"通知摘要",cls:"NotificationSectionsManager",desc:"通知分段显示(提醒类/静默类)",
+    f:["提醒类通知区域","静默类通知区域","通知优先级自动分类","个人/工作通知分离"],r:["notif_stack","notif_groups"]},
+   {id:"notif_permission",name:"通知权限",cls:"NotificationPermissionDialog",desc:"通知运行时权限管理",
+    f:["POST_NOTIFICATIONS权限","应用首次发送通知时请求权限","权限管理界面","通知权限状态检查"],r:["notif_channels","notif_entry"]},
+   {id:"notif_icons",name:"通知图标",cls:"NotificationIconAreaController",desc:"状态栏左侧显示的未处理通知小图标区域",
+    f:["通知图标在状态栏显示","图标优先级排序","图标数量限制","隐藏敏感通知图标"],r:["sb_icon_ctrl","notif_entry","sb_window"]},
+   {id:"notif_footer",name:"通知底部",cls:"FooterView",desc:"通知列表底部的管理入口和清除按钮",
+    f:["全部清除按钮","通知管理入口","通知历史入口","最近通知提示"],r:["notif_stack","notif_history"]},
+   {id:"notif_ranking",name:"通知排序",cls:"NotificationRankingHelper",desc:"通知的排序算法和优先级管理",
+    f:["按时间排序","按优先级排序","重要性级别分类","固定通知置顶","对话通知优先"],r:["notif_stack","notif_entry","notif_channels"]}
+  ]},
+ {id:"quicksettings",name:"Quick Settings 快速设置",c:"#34d399",css:"c3",
+  desc:"下拉面板中的快捷开关磁贴，用于快速切换系统功能",
+  children:[
+   {id:"qs_panel",name:"QSPanel",cls:"QSPanel / QSContainerImpl",desc:"快速设置面板主容器，承载所有QS磁贴",
+    f:["磁贴网格布局","面板展开/折叠","磁贴动态添加/移除","安全锁屏下受限磁贴","QS Footer底部区域"],r:["qs_tile","qs_host","shade_panel"]},
+   {id:"qs_host",name:"QSTileHost",cls:"QSTileHost",desc:"QS磁贴宿主，管理所有磁贴的创建、生命周期和spec配置",
+    f:["磁贴spec注册和解析","磁贴工厂(QSFactoryImpl)","磁贴生命周期管理","默认磁贴列表配置","磁贴顺序持久化"],r:["qs_panel","qs_factory","qs_tile"]},
+   {id:"qs_factory",name:"QSFactoryImpl",cls:"QSFactoryImpl",desc:"QS磁贴工厂，根据tile spec创建对应的QSTile实例",
+    f:["按spec字符串创建QSTile","支持自定义磁贴","第三方应用磁贴创建","磁贴类型映射"],r:["qs_host","qs_tile"]},
+   {id:"qs_tile",name:"QSTile 基类",cls:"QSTileImpl / QSTileViewImpl",desc:"单个QS磁贴的基类，处理点击/长按/状态切换",
+    f:["磁贴状态机(Inactive/Active/Unavailable)","单击切换功能开关","长按跳转设置","二级状态(如WiFi已连接/未连接)","磁贴图标/标签/副标题","可访问性描述"],r:["qs_host","qs_panel"]},
+   {id:"qs_wifi",name:"WiFi 磁贴",cls:"WifiTile",desc:"WiFi快速开关，显示当前连接的WiFi名称",
+    f:["WiFi开/关切换","已连接WiFi名称显示","信号强度图标","长按跳转WiFi设置","WiFi网络列表快捷入口"],r:["qs_tile"]},
+   {id:"qs_bt",name:"蓝牙 磁贴",cls:"BluetoothTile",desc:"蓝牙快速开关，显示已连接蓝牙设备",
+    f:["蓝牙开/关切换","已配对设备名称显示","长按跳转蓝牙设置","音频设备快速切换"],r:["qs_tile"]},
+   {id:"qs_cell",name:"移动数据 磁贴",cls:"CellularTile",desc:"移动数据开关",
+    f:["移动数据开/关","数据用量显示","长按进入数据设置","双卡数据切换"],r:["qs_tile"]},
+   {id:"qs_airplane",name:"飞行模式 磁贴",cls:"AirplaneModeTile",desc:"飞行模式快速开关",
+    f:["飞行模式开/关","关闭所有无线连接","部分连接可选保留(如WiFi)"],r:["qs_tile"]},
+   {id:"qs_dnd",name:"免打扰 磁贴",cls:"DndTile",desc:"勿扰模式快速开关",
+    f:["免打扰模式开/关","优先级规则","自动规则配置","长按进入免打扰设置"],r:["qs_tile","volume_ringer"]},
+   {id:"qs_flash",name:"手电筒 磁贴",cls:"FlashlightTile",desc:"手电筒/闪光灯快速开关",
+    f:["手电筒开/关","调用CameraManager控制闪光灯"],r:["qs_tile"]},
+   {id:"qs_rotate",name:"自动旋转 磁贴",cls:"RotationLockTile",desc:"屏幕自动旋转开关",
+    f:["自动旋转开/关","锁定当前方向","传感器检测旋转"],r:["qs_tile"]},
+   {id:"qs_battery",name:"省电模式 磁贴",cls:"BatterySaverTile",desc:"省电模式/超级省电模式快速开关",
+    f:["省电模式开/关","超级省电模式","电量阈值设置","限制后台活动","降低屏幕亮度"],r:["qs_tile","battery_view"]},
+   {id:"qs_location",name:"位置信息 磁贴",cls:"LocationTile",desc:"GPS/位置服务快速开关",
+    f:["位置服务开/关","精确/大致位置模式","长按进入位置设置"],r:["qs_tile"]},
+   {id:"qs_hotspot",name:"热点 磁贴",cls:"HotspotTile",desc:"WiFi热点快速开关",
+    f:["热点开/关","热点名称/密码管理","连接设备数量显示","长按进入热点设置"],r:["qs_tile"]},
+   {id:"qs_cast",name:"投屏 磁贴",cls:"CastTile",desc:"屏幕投射/Cast快速开关",
+    f:["搜索可用Cast设备","投屏开/关","连接状态显示"],r:["qs_tile"]},
+   {id:"qs_dark",name:"深色模式 磁贴",cls:"DarkThemeTile",desc:"系统深色模式快速开关",
+    f:["深色模式开/关","定时自动切换","跟随日出/日落","长按进入显示设置"],r:["qs_tile","theme_ctrl"]},
+   {id:"qs_night",name:"夜间模式 磁贴",cls:"NightDisplayTile",desc:"护眼模式/蓝光过滤快速开关",
+    f:["护眼模式开/关","色温调节","定时自动开关","长按进入详细设置"],r:["qs_tile","qs_dark"]},
+   {id:"qs_nfc",name:"NFC 磁贴",cls:"NfcTile",desc:"NFC近场通信快速开关",
+    f:["NFC开/关","触碰付款设置入口"],r:["qs_tile"]},
+   {id:"qs_vpn",name:"VPN 磁贴/指示",cls:"VpnTile / VpnStatusObserver",desc:"VPN连接状态指示和快捷开关",
+    f:["VPN连接状态显示","VPN开关","长按进入VPN设置","锁型图标指示"],r:["qs_tile","sb_icon_ctrl"]},
+   {id:"qs_wallet",name:"钱包 磁贴",cls:"WalletTile",desc:"Google Wallet/支付卡片快捷入口",
+    f:["默认支付卡显示","快速切换支付卡","打开钱包应用","NFC支付相关"],r:["qs_tile"]},
+   {id:"qs_device_ctrl",name:"设备控制 磁贴",cls:"DeviceControlTile",desc:"智能家居设备控制快捷入口",
+    f:["显示已配置的设备控制","快速控制智能家居设备","打开完整设备控制面板"],r:["qs_tile"]},
+   {id:"qs_customize",name:"QS自定义编辑",cls:"QSCustomizer",desc:"快速设置磁贴的自定义编辑模式",
+    f:["拖拽排序磁贴","添加/移除磁贴","恢复默认布局","磁贴列表浏览"],r:["qs_panel","qs_host"]}
+  ]},
+ {id:"lockscreen",name:"LockScreen / Keyguard 锁屏",c:"#f97316",css:"c4",
+  desc:"锁屏界面，包括安全验证、时钟、通知、壁纸等",
+  children:[
+   {id:"kg_mediator",name:"KeyguardViewMediator",cls:"KeyguardViewMediator",desc:"锁屏核心协调者，管理锁屏的显示、隐藏、解锁和安全验证流程",
+    f:["锁屏显示/隐藏控制","解锁成功/失败处理","锁屏超时锁定","设备启动时锁屏初始化","锁定请求处理","TrustManager信任状态管理"],r:["kg_security","kg_bouncer","kg_update_mon"]},
+   {id:"kg_security",name:"KeyguardSecurityContainer",cls:"KeyguardSecurityContainer",desc:"锁屏安全验证容器，支持图案、PIN码、密码等验证方式",
+    f:["Pattern图案解锁","PIN数字密码解锁","Password文字密码解锁","验证失败次数限制","锁定超时机制","切换验证方式"],r:["kg_mediator","kg_bouncer","biometric_ui"]},
+   {id:"kg_bouncer",name:"KeyguardBouncer",cls:"KeyguardBouncer",desc:"锁屏弹出的安全验证界面(向上滑动后出现的验证UI)",
+    f:["向上滑动触发显示","安全验证输入界面","验证成功后解锁","验证失败动画反馈","生物识别备用入口","紧急呼叫入口"],r:["kg_security","kg_mediator","biometric_ui"]},
+   {id:"kg_update_mon",name:"KeyguardUpdateMonitor",cls:"KeyguardUpdateMonitor",desc:"锁屏状态监控器，监听影响锁屏的各种系统状态变化",
+    f:["SIM卡状态监听","电池状态监听","时间/时区变化监听","生物特征状态监听","用户切换监听","信任代理状态监听","电话状态监听","指纹/面部认证状态"],r:["kg_mediator","kg_security","biometric_ui"]},
+   {id:"kg_clock",name:"锁屏时钟",cls:"KeyguardClockSwitch / ClockProvider",desc:"锁屏界面的大时钟显示",
+    f:["数字时钟/模拟时钟","大/小尺寸时钟切换","自定义时钟样式(Android 14+)","双行时钟布局","天气信息显示","日期显示","闹钟时间显示"],r:["kg_mediator","kg_indication","kg_notif"]},
+   {id:"kg_indication",name:"KeyguardIndication",cls:"KeyguardIndicationController",desc:"锁屏底部的指示文字(充电信息、信任状态等)",
+    f:["充电状态指示","电池电量指示","已锁定/信任状态","SIM卡锁定指示","安全模式提示","生物识别错误提示"],r:["kg_mediator","kg_clock","battery_view"]},
+   {id:"kg_notif",name:"锁屏通知",cls:"KeyguardNotificationAreaView",desc:"锁屏界面上显示的通知",
+    f:["锁屏通知列表展示","通知敏感内容隐藏","通知展开/折叠","通知快捷操作","AOD上的通知显示","锁屏通知优先级排序"],r:["notif_entry","kg_clock","kg_mediator"]},
+   {id:"kg_wallpaper",name:"锁屏壁纸",cls:"KeyguardWallpaper",desc:"锁屏壁纸显示和管理",
+    f:["静态/动态壁纸","壁纸颜色提取","壁纸模糊效果","锁屏/桌面分别设置壁纸","Live Wallpaper支持"],r:["kg_mediator","theme_engine"]},
+   {id:"kg_shortcuts",name:"锁屏快捷方式",cls:"KeyguardBottomAreaView",desc:"锁屏底部的快捷入口(如相机、手电筒)",
+    f:["左侧快捷方式(默认电话)","右侧快捷方式(默认相机)","自定义快捷应用","滑动触发快捷方式"],r:["kg_mediator","kg_bouncer"]},
+   {id:"aod",name:"AOD 息屏显示",cls:"DozeUi / AmbientDisplayConfiguration",desc:"Always On Display 息屏显示功能",
+    f:["时钟/日期息屏显示","通知图标息屏显示","音乐播放信息","双击唤醒","抬手亮屏","始终显示/定时显示/点击显示模式","低功耗AMOLED优化"],r:["kg_mediator","kg_clock","doze"]},
+   {id:"doze",name:"Doze 环境显示",cls:"DozeServiceHost / DozeLog",desc:"环境显示/唤醒显示，设备静止时低功耗显示通知等",
+    f:["传感器触发唤醒","通知到达唤醒","抬手唤醒","双击唤醒","口袋模式检测","脉冲通知(Pulse)"],r:["aod","kg_mediator"]},
+   {id:"smart_lock",name:"Smart Lock 智能解锁",cls:"TrustAgentService",desc:"在特定条件下自动跳过锁屏验证",
+    f:["信任的地点","信任的设备(蓝牙)","信任的面部","On-body detection随身检测","信任的语音","锁屏信任超时设置"],r:["kg_mediator","kg_update_mon","biometric_ui"]}
+  ]},
+ {id:"navigation",name:"NavigationBar 导航栏",c:"#f472b6",css:"c5",
+  desc:"底部导航栏，支持手势导航和三键导航",
+  children:[
+   {id:"nav_bar",name:"NavigationBarView",cls:"NavigationBarView",desc:"底部导航栏视图，管理返回/主页/最近任务按钮或手势区域",
+    f:["三键导航布局","两键导航布局","手势导航布局","导航栏高度适配","深色/浅色按钮切换","IME(输入法)区域适配"],r:["nav_gesture","nav_edge_back","light_bar"]},
+   {id:"nav_gesture",name:"手势导航",cls:"NavigationModeController",desc:"基于手势的导航系统",
+    f:["底部上滑回到主页","底部上滑停顿打开最近任务","底部左右滑动快速切换应用","边缘侧滑返回","手势灵敏度设置","预测性返回手势(Android 14+)"],r:["nav_bar","nav_edge_back","recents_view"]},
+   {id:"nav_edge_back",name:"边缘返回手势",cls:"EdgeBackGestureHandler / BackPanel",desc:"屏幕左右边缘滑动返回的手势处理",
+    f:["左右边缘侧滑返回","BackPanel返回手势视觉指示","手势热区宽度调节","排除系统UI区域","应用手势冲突处理","预测性返回动画","返回手势箭头动画"],r:["nav_gesture","nav_bar"]},
+   {id:"nav_3btn",name:"三键导航",cls:"NavigationBarInflaterView",desc:"传统的返回、主页、最近任务三个导航按钮",
+    f:["返回按钮","主页按钮","最近任务按钮","按钮长按自定义操作","按钮位置可配置(开发者选项)"],r:["nav_bar","recents_view"]},
+   {id:"taskbar",name:"Taskbar 任务栏",cls:"TaskbarView / TaskbarController",desc:"平板/折叠屏/桌面模式下的常驻任务栏",
+    f:["常驻底部应用栏","常用应用快捷方式","最近应用图标","拖拽启动应用","分屏拖拽","桌面模式下替代导航栏","键盘鼠标优化"],r:["nav_bar","multiwindow_desktop","recents_view"]}
+  ]},
+ {id:"shade",name:"Shade / Panel 面板",c:"#facc15",css:"c6",
+  desc:"下拉通知/快速设置面板的容器和交互逻辑",
+  children:[
+   {id:"shade_panel",name:"NotificationShadeWindowView",cls:"NotificationShadeWindowView",desc:"通知栏下拉面板的顶层窗口容器",
+    f:["管理整个下拉面板窗口","处理面板展开/收起手势","管理面板窗口层级","与StatusBar窗口协调","面板锁定状态管理"],r:["notif_panel","qs_panel","shade_scrim"]},
+   {id:"shade_header",name:"ShadeHeaderController",cls:"ShadeHeaderController",desc:"下拉面板顶部头部区域(日期、设置入口等)",
+    f:["日期显示","设置快捷入口","用户头像/切换","QS编辑按钮","电源菜单快捷入口"],r:["shade_panel","qs_panel"]},
+   {id:"shade_scrim",name:"ScrimController",cls:"ScrimController",desc:"下拉面板背景遮罩控制器",
+    f:["背景渐变遮罩动画","锁屏遮罩","AOD遮罩","展开进度跟随","透明/半透明/不透明状态","生物识别面板遮罩"],r:["shade_panel","kg_mediator","biometric_ui"]},
+   {id:"shade_split",name:"分离式下拉",cls:"NotificationShadeWindowController",desc:"分离式下拉：左侧下拉通知，右侧下拉快捷设置",
+    f:["左半屏下拉进入通知","右半屏下拉进入快捷设置","合并模式选项","可配置分离行为"],r:["shade_panel","notif_panel","qs_panel"]}
+  ]},
+ {id:"volume",name:"Volume UI 音量控制",c:"#38bdf8",css:"c7",
+  desc:"音量调节对话框和相关音量管理UI",
+  children:[
+   {id:"volume_dialog",name:"VolumeDialogImpl",cls:"VolumeDialogImpl",desc:"音量调节弹出对话框",
+    f:["音量滑块显示","按音量键自动弹出","自动超时消失","媒体/铃声/闹钟音量","音量展开/折叠","Ringer模式切换"],r:["volume_streams","volume_ringer"]},
+   {id:"volume_streams",name:"音量流管理",cls:"AudioManager / VolumeController",desc:"系统音量流的管理",
+    f:["STREAM_MUSIC媒体音量","STREAM_RING铃声音量","STREAM_NOTIFICATION通知音量","STREAM_ALARM闹钟音量","STREAM_VOICE_CALL通话音量","STREAM_SYSTEM系统音量","音量流独立调节"],r:["volume_dialog","volume_ringer"]},
+   {id:"volume_ringer",name:"铃声模式",cls:"RingerModeIndicator",desc:"铃声模式切换(正常/振动/静音)",
+    f:["正常模式(铃声+振动)","振动模式","静音模式","快速切换UI","音量面板快捷切换"],r:["volume_dialog","qs_dnd"]},
+   {id:"volume_output",name:"音频输出切换",cls:"MediaOutputDialog",desc:"音频输出设备选择(扬声器/耳机/蓝牙等)",
+    f:["输出设备列表","蓝牙音频设备切换","有线耳机检测","投屏音频输出","Spatial Audio空间音频","音频共享"],r:["volume_dialog","media_ctrl"]}
+  ]},
+ {id:"power",name:"Power UI 电源菜单",c:"#fb7185",css:"c8",
+  desc:"长按电源键弹出的全局操作菜单",
+  children:[
+   {id:"power_ui",name:"GlobalActionsDialog",cls:"GlobalActionsDialogLite",desc:"长按电源键弹出的全局操作菜单",
+    f:["关机选项","重启选项","紧急呼叫","截屏","锁定模式","设备控制/钱包快捷入口","Google Assistant入口"],r:["screenshot_ctrl","kg_mediator"]},
+   {id:"power_emergency",name:"紧急求救",cls:"EmergencyAction",desc:"紧急求救/紧急呼叫功能",
+    f:["快速连按电源键触发","紧急拨号","SOS信息发送","位置共享","医疗信息显示"],r:["power_ui"]},
+   {id:"power_lockdown",name:"锁定模式",cls:"LockDownAction",desc:"临时禁用生物识别和智能解锁",
+    f:["禁用指纹解锁","禁用面部解锁","禁用Smart Lock","仅允许密码/图案/PIN","通知内容隐藏"],r:["power_ui","kg_mediator","biometric_ui"]}
+  ]},
+ {id:"screenshot",name:"Screenshot 截图",c:"#a3e635",css:"c9",
+  desc:"截图功能，包括截图预览、编辑、长截图等",
+  children:[
+   {id:"screenshot_ctrl",name:"ScreenshotController",cls:"ScreenshotController",desc:"截图功能核心控制器",
+    f:["电源+音量下键截图","三指下滑截图","截图音效","截图振动反馈","截图通知发送","截图存储管理"],r:["screenshot_overlay","screenshot_scroll"]},
+   {id:"screenshot_overlay",name:"截图预览",cls:"ScreenshotView / ScreenshotDetectionController",desc:"截图后的浮动预览和操作UI",
+    f:["截图缩略图预览","分享按钮","编辑按钮","删除按钮","长截图按钮","向下滚动截图","预览自动消失","拖拽分享"],r:["screenshot_ctrl"]},
+   {id:"screenshot_scroll",name:"长截图/滚动截图",cls:"ScrollCaptureController",desc:"滚动截图/长截图功能",
+    f:["自动滚动捕获","手动选择截图区域","拼接多页内容","应用需支持ScrollCapture API","截取后编辑"],r:["screenshot_ctrl","screenshot_overlay"]}
+  ]},
+ {id:"screenrecord",name:"Screen Recording 屏幕录制",c:"#e879f9",css:"c10",
+  desc:"屏幕录制功能，支持音频录制和悬浮控制",
+  children:[
+   {id:"screenrecord_ui",name:"ScreenRecordUI",cls:"ScreenRecordUI",desc:"屏幕录制用户界面",
+    f:["录制按钮(快速设置磁贴)","录制开始/停止/暂停","录制计时器显示","录制质量选择","录制区域选择(全屏/单应用)"],r:["screenrecord_audio","privacy_dot"]},
+   {id:"screenrecord_audio",name:"录制音频选项",cls:"MediaProjectionManager",desc:"屏幕录制的音频源选项",
+    f:["仅录制麦克风","仅录制设备音频","同时录制麦克风和设备音频","不录制音频"],r:["screenrecord_ui","volume_output"]}
+  ]},
+ {id:"pip",name:"PIP 画中画",c:"#fbbf24",css:"c11",
+  desc:"画中画小窗模式",
+  children:[
+   {id:"pip_ctrl",name:"PipController",cls:"PipController / PipTaskOrganizer",desc:"画中画模式核心控制器",
+    f:["PIP窗口创建和管理","PIP窗口拖拽移动","PIP窗口大小调整","PIP窗口堆叠/隐藏","PIP进入/退出动画","画中画自动进入设置"],r:["pip_gesture","pip_menu"]},
+   {id:"pip_gesture",name:"PIP手势",cls:"PipTouchHandler",desc:"画中画窗口的手势交互",
+    f:["拖拽移动PIP窗口","双击放大/缩小","捏合调整大小","甩到边缘隐藏","边缘停靠","Fling快速甩动"],r:["pip_ctrl","pip_menu"]},
+   {id:"pip_menu",name:"PIP菜单",cls:"PipMenuView",desc:"画中画窗口的操作菜单",
+    f:["关闭PIP","最大化窗口","全屏播放","设置入口","菜单呼出手势","菜单自动消失"],r:["pip_ctrl","pip_gesture"]}
+  ]},
+ {id:"bubbles",name:"Bubbles 气泡通知",c:"#6ee7b7",css:"c12",
+  desc:"悬浮气泡形式的通知交互",
+  children:[
+   {id:"bubbles_ctrl",name:"BubbleController",cls:"BubbleController",desc:"气泡通知核心控制器",
+    f:["气泡创建和管理","气泡显示/隐藏","气泡权限管理","应用级气泡设置","气泡数据持久化","与通知系统集成"],r:["bubbles_view","notif_messaging","notif_entry"]},
+   {id:"bubbles_view",name:"BubbleStackView",cls:"BubbleStackView / BubbleExpandedView",desc:"气泡的视觉视图和展开交互",
+    f:["气泡圆形图标","气泡堆叠排列","气泡拖拽移动","气泡展开详情视图","气泡溢出管理","气泡入场/退场动画"],r:["bubbles_ctrl","notif_messaging"]}
+  ]},
+ {id:"media",name:"Media Controls 媒体控制",c:"#c084fc",css:"c13",
+  desc:"通知栏中的媒体播放控制面板",
+  children:[
+   {id:"media_ctrl",name:"MediaControlPanel",cls:"MediaControlPanel",desc:"通知面板中的媒体播放控制面板",
+    f:["播放/暂停按钮","上一曲/下一曲","进度条拖拽","媒体标题/艺术家/专辑","专辑封面显示","输出设备切换按钮","点赞/自定义操作"],r:["media_carousel","media_data_mgr"]},
+   {id:"media_carousel",name:"MediaCarousel",cls:"MediaCarouselController",desc:"多个媒体会话的轮播切换",
+    f:["左右滑动切换媒体源","多个MediaSession并存","最近活跃媒体源优先","推荐恢复播放","紧凑/展开视图"],r:["media_ctrl","media_data_mgr"]},
+   {id:"media_data_mgr",name:"MediaDataManager",cls:"MediaDataManager",desc:"媒体数据管理器，从MediaSession获取和管理媒体元数据",
+    f:["MediaSession数据获取","媒体元数据解析","专辑封面加载","播放状态跟踪","MediaAction构建","第三方应用媒体集成"],r:["media_ctrl","media_carousel"]},
+   {id:"media_output",name:"媒体输出切换",cls:"MediaOutputSwitchDialog",desc:"媒体音频输出设备的选择对话框",
+    f:["可用设备列表","蓝牙音频设备","有线耳机","扬声器","投屏设备","设备音量独立调节","音频共享"],r:["media_ctrl","volume_output"]}
+  ]},
+ {id:"display",name:"Display 显示管理",c:"#67e8f9",css:"c14",
+  desc:"亮度调节、深色模式、夜间模式、屏幕缩放等",
+  children:[
+   {id:"brightness_ctrl",name:"亮度控制",cls:"BrightnessController / ToggleSliderBase",desc:"屏幕亮度调节滑块和自动亮度控制",
+    f:["手动亮度滑块","自动亮度开关","自适应亮度学习","亮度最小值限制","夜间室外高亮"],r:["qs_panel","shade_header"]},
+   {id:"dark_mode",name:"深色模式",cls:"UiModeManager / DarkThemeObserver",desc:"系统级深色模式/暗色主题",
+    f:["全局深色主题","定时自动切换","跟随日出/日落","应用强制深色模式","深色模式调度设置"],r:["qs_dark","theme_engine"]},
+   {id:"night_light",name:"夜间模式",cls:"NightDisplayController",desc:"蓝光过滤/护眼模式",
+    f:["色温调节滑块","定时自动开关","自定义时间范围","跟随日出/日落","开/关/自动三种模式"],r:["qs_night","brightness_ctrl"]},
+   {id:"screen_zoom",name:"屏幕缩放",cls:"DisplayDensityUtils",desc:"屏幕显示大小/密度调整",
+    f:["显示大小滑块","DPI调整","字体大小调整","元素缩放"],r:["brightness_ctrl"]}
+  ]},
+ {id:"biometric",name:"Biometric 生物识别",c:"#fda4af",css:"c15",
+  desc:"指纹识别、面部识别等生物认证的UI层",
+  children:[
+   {id:"biometric_ui",name:"BiometricPrompt",cls:"BiometricDialogView / AuthController",desc:"生物识别认证的统一UI层",
+    f:["指纹认证界面","面部认证界面","认证成功/失败反馈","认证超时处理","多次失败后密码回退","认证取消","设备凭据回退"],r:["udfps","face_unlock","kg_bouncer"]},
+   {id:"udfps",name:"屏下指纹",cls:"UdfpsController / UdfpsView",desc:"Under-Display Fingerprint Sensor 屏下指纹传感器UI",
+    f:["指纹识别区域高亮","指纹图标/HBM光效","触摸唤醒指纹识别","按压指纹动画","指纹识别成功/失败视觉反馈","AOD下指纹识别"],r:["biometric_ui","aod"]},
+   {id:"face_unlock",name:"面部识别",cls:"FaceUnlockView",desc:"面部识别解锁UI",
+    f:["面部识别动画","红外/结构光/2D面部识别","识别成功视觉反馈","口罩面部识别(Android 14+)","识别失败重试","面部数据录入引导"],r:["biometric_ui","kg_mediator"]}
+  ]},
+ {id:"multiwindow",name:"Multi-Window 多窗口",c:"#bef264",css:"c16",
+  desc:"分屏、自由窗口、桌面模式等多窗口管理",
+  children:[
+   {id:"split_screen",name:"分屏模式",cls:"SplitScreenController / SplitLayout",desc:"将屏幕分为两部分同时显示两个应用",
+    f:["上下分屏布局","左右分屏布局","分屏分割线拖拽调整","快速切换分屏应用","分屏应用对保存","从最近任务拖拽分屏","应用对快捷方式"],r:["multiwindow_desktop","recents_view","taskbar"]},
+   {id:"multiwindow_desktop",name:"桌面窗口模式",cls:"DesktopTasksController",desc:"Android 16新增的桌面模式，支持自由窗口和类桌面体验",
+    f:["自由浮动窗口","窗口标题栏/拖拽/调整大小","多窗口同时运行","桌面底部任务栏","窗口最小化/最大化","窗口排列","虚拟桌面","鼠标键盘优化","外接显示器支持"],r:["split_screen","taskbar","wmshell_trans"]},
+   {id:"freeform",name:"自由窗口",cls:"FreeformController",desc:"自由浮动窗口管理",
+    f:["自由位置窗口","可调整大小的窗口","窗口标题栏","关闭/最小化/最大化按钮","窗口堆叠层级","窗口间拖拽"],r:["multiwindow_desktop","split_screen"]},
+   {id:"one_handed",name:"单手模式",cls:"OneHandedController",desc:"缩小屏幕显示区域以便单手操作",
+    f:["下拉触发单手模式","屏幕内容下移","退出单手模式手势","超时自动退出","左右手切换","支持的应用"],r:["nav_gesture","shade_panel"]}
+  ]},
+ {id:"recents",name:"Recents 最近任务",c:"#d8b4fe",css:"c17",
+  desc:"最近任务切换器，任务预览和管理",
+  children:[
+   {id:"recents_view",name:"RecentsView",cls:"RecentsView",desc:"最近任务视图，显示最近使用过的应用缩略图",
+    f:["水平/垂直任务卡片滚动","任务卡片缩略图","清除所有任务","单个任务滑动关闭","任务快速切换","任务信息/设置入口"],r:["recents_task","nav_gesture","split_screen"]},
+   {id:"recents_task",name:"TaskView",cls:"TaskView",desc:"最近任务中的单个任务卡片视图",
+    f:["任务缩略图显示","任务图标和名称","任务操作菜单","截图分享","应用信息入口","固定屏幕","分屏启动","锁定任务"],r:["recents_view"]},
+   {id:"recents_anim",name:"Recents动画",cls:"RecentsAnimationController",desc:"最近任务的过渡动画控制",
+    f:["应用到最近任务的过渡","最近任务到应用的过渡","缩放+模糊动画","手势跟手动画","预测性返回动画","无缝过渡"],r:["recents_view","nav_gesture","wmshell_trans"]}
+  ]},
+ {id:"theming",name:"Theming 主题定制",c:"#fdba74",css:"c18",
+  desc:"Material You 动态取色、壁纸主题、深色模式等",
+  children:[
+   {id:"theme_engine",name:"Monet引擎",cls:"MonetEngine / ColorScheme",desc:"Material You 动态取色引擎，从壁纸提取颜色生成完整主题",
+    f:["WallpaperColors颜色提取","色调/饱和度/亮度映射","生成Accent1-Accent4色板","生成Neutral1-Neutral2色板","支持HCT色彩空间","壁纸变化时自动更新主题"],r:["theme_overlay","kg_wallpaper"]},
+   {id:"theme_overlay",name:"ThemeOverlayController",cls:"ThemeOverlayController",desc:"主题叠加层控制器，应用动态生成的资源覆盖层",
+    f:["动态RRO(Runtime Resource Overlay)","颜色资源覆盖","暗色/亮色模式适配","Overlay包分发","系统UI主题更新","第三方应用主题"],r:["theme_engine","dark_mode"]},
+   {id:"theme_custom",name:"自定义选项",cls:"CustomizationProvider",desc:"用户可定制的主题元素",
+    f:["图标形状定制","字体选择","颜色调色板选择","锁屏时钟样式","快速设置磁贴样式","壁纸与风格设置入口"],r:["theme_engine","kg_clock"]}
+  ]},
+ {id:"privacy",name:"Privacy 隐私安全",c:"#86efac",css:"c19",
+  desc:"隐私指示器、权限管理、传感器开关等",
+  children:[
+   {id:"privacy_dot",name:"隐私指示器",cls:"PrivacyDotViewController",desc:"状态栏角落显示的隐私指示点(摄像头/麦克风/位置)",
+    f:["摄像头使用指示(绿点)","麦克风使用指示(橙点)","位置使用指示","指示器颜色区分","下拉显示详情","指示器动画"],r:["sb_window","privacy_hub"]},
+   {id:"privacy_hub",name:"隐私仪表板",cls:"PermissionsHubController",desc:"隐私仪表板/权限使用记录",
+    f:["过去24小时权限使用记录","摄像头/麦克风/位置使用时间线","应用权限管理入口","传感器访问图表","权限提醒通知"],r:["privacy_dot","privacy_toggles"]},
+   {id:"privacy_toggles",name:"传感器开关",cls:"SensorPrivacyController",desc:"快速设置中的摄像头/麦克风硬件级开关",
+    f:["摄像头硬件关闭开关","麦克风硬件关闭开关","软件级传感器阻止","应用无法检测关闭状态","QS磁贴快速切换"],r:["qs_panel","privacy_dot","privacy_hub"]},
+   {id:"privacy_clipboard",name:"剪贴板访问提示",cls:"ClipboardListener",desc:"当应用读取剪贴板时显示提示",
+    f:["剪贴板读取通知","来源应用名显示","Toast提示","自动清除剪贴板内容","剪贴板历史"],r:["privacy_hub","privacy_dot"]}
+  ]},
+ {id:"wmshell",name:"WmShell 窗口管理壳",c:"#93c5fd",css:"c20",
+  desc:"SystemUI中的窗口管理Shell层，协调多窗口、过渡动画等",
+  children:[
+   {id:"wmshell_org",name:"ShellTaskOrganizer",cls:"ShellTaskOrganizer",desc:"Shell层的任务组织器",
+    f:["任务生命周期回调","任务信息更新","分屏/PIP/自由窗口任务分配","DisplayArea管理","任务可见性变化通知"],r:["wmshell_trans","split_screen","pip_ctrl"]},
+   {id:"wmshell_trans",name:"ShellTransitions",cls:"ShellTransitions",desc:"Shell层过渡动画管理器",
+    f:["应用启动/退出过渡","分屏进入/退出过渡","PIP进入/退出过渡","最近任务过渡","自定义过渡动画","过渡同步控制"],r:["wmshell_org","recents_anim","split_screen"]},
+   {id:"wmshell_display",name:"DisplayAreaHelper",cls:"DisplayAreaHelper",desc:"显示区域辅助器",
+    f:["DisplayArea创建和管理","窗口层级分配","多显示器支持","折叠屏内外屏切换","分屏DisplayArea管理"],r:["wmshell_org","multiwindow_desktop"]},
+   {id:"wmshell_drag",name:"DragToDesktop",cls:"DragAndDropController",desc:"拖拽到桌面模式的支持",
+    f:["任务拖拽到自由窗口","拖拽到分屏","拖拽启动应用","拖拽动画","跨DisplayArea拖拽"],r:["wmshell_org","multiwindow_desktop","taskbar"]}
+  ]}
+];
+
+// ======================== FLATTEN ========================
+const NODES = [];
+C.forEach(cat => { cat.children.forEach(n => { NODES.push({...n, cat: cat.id}); }); });
+
+// ======================== RENDER ========================
+let svgG, zb;
+
+function init() {
+  let lc = 0;
+  C.forEach(c => { lc += c.children.length; c.children.forEach(n => { if(n.r) lc += n.r.length; }); });
+  document.getElementById('s-cats').textContent = C.length;
+  document.getElementById('s-nodes').textContent = NODES.length;
+  document.getElementById('s-links').textContent = lc;
+  renderSidebar(); renderGraph(); setupSearch();
+}
+
+function renderSidebar() {
+  const sb = document.getElementById('sidebar');
+  sb.innerHTML = C.map(cat => `<div class="category" data-cat="${cat.id}">
+    <div class="cat-header" onclick="toggleCat(this)"><span class="arrow">▶</span>
+    <span class="cat-dot" style="background:${cat.c}"></span><span>${cat.name}</span>
+    <span class="cat-count">${cat.children.length}</span></div>
+    <div class="children">${cat.children.map(n => `<div class="node-item" data-id="${n.id}" onclick="selectNode('${n.id}')">
+      <span class="dot" style="background:${cat.c}"></span><span>${n.name}</span></div>`).join('')}</div></div>`).join('');
+}
+
+function toggleCat(el) {
+  el.nextElementSibling.classList.toggle('open');
+  el.querySelector('.arrow').classList.toggle('open');
+}
+
+function renderGraph() {
+  const container = document.getElementById('graph-container');
+  const rect = container.getBoundingClientRect();
+  const w = rect.width || 800, h = rect.height || 600;
+  const svg = document.getElementById('graph-svg');
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.innerHTML = '';
+
+  const nodes = [], links = [];
+  const catMap = {}; C.forEach(c => catMap[c.id] = c);
+  // category nodes
+  C.forEach((c,i) => {
+    const angle = (2*Math.PI/C.length)*i - Math.PI/2;
+    const r = Math.min(w,h)*0.32;
+    nodes.push({id:c.id, name:c.name.split(' ')[0], color:c.c, r:20, isCat:true, cat:c.id,
+      x:w/2+Math.cos(angle)*r, y:h/2+Math.sin(angle)*r, vx:0, vy:0});
+  });
+  // feature nodes
+  const nodeById = {};
+  nodes.forEach(n => nodeById[n.id] = n);
+  NODES.forEach(n => {
+    const cat = catMap[n.cat];
+    const parent = nodeById[n.cat];
+    nodes.push({id:n.id, name:n.name.length>7?n.name.substring(0,7)+'..':n.name, color:cat.c, r:8, isCat:false, cat:n.cat,
+      x:parent.x+(Math.random()-0.5)*100, y:parent.y+(Math.random()-0.5)*100, vx:0, vy:0});
+    links.push({source:n.cat, target:n.id, color:cat.c, cross:false});
+  });
+  nodes.forEach(n => nodeById[n.id] = n);
+  // cross links
+  NODES.forEach(n => {
+    (n.r||[]).forEach(rid => {
+      if(nodeById[rid]) {
+        const tn = NODES.find(x => x.id === rid);
+        links.push({source:n.id, target:rid, color: tn ? catMap[tn.cat].c : '#555', cross:true});
+      }
+    });
+  });
+
+  // force simulation
+  for(let iter=0;iter<300;iter++) {
+    const a = 0.3*(1-iter/300);
+    // center gravity
+    nodes.forEach(n => { n.vx+=(w/2-n.x)*0.0004*a; n.vy+=(h/2-n.y)*0.0004*a; });
+    // cat repulsion
+    const cats = nodes.filter(n=>n.isCat);
+    for(let i=0;i<cats.length;i++) for(let j=i+1;j<cats.length;j++) {
+      const dx=cats[j].x-cats[i].x, dy=cats[j].y-cats[i].y;
+      const d=Math.sqrt(dx*dx+dy*dy)||1, f=4000/(d*d);
+      cats[i].vx-=dx/d*f*a; cats[i].vy-=dy/d*f*a;
+      cats[j].vx+=dx/d*f*a; cats[j].vy+=dy/d*f*a;
+    }
+    // link spring
+    links.forEach(l => {
+      const s=nodeById[l.source], t=nodeById[l.target];
+      if(!s||!t) return;
+      const dx=t.x-s.x, dy=t.y-s.y, d=Math.sqrt(dx*dx+dy*dy)||1;
+      const ideal=l.cross?70:(s.isCat||t.isCat?90:55), f=(d-ideal)*0.004*a;
+      const fx=dx/d*f, fy=dy/d*f;
+      if(!s.isCat){s.vx+=fx;s.vy+=fy;} if(!t.isCat){t.vx+=fx;t.vy+=fy;}
+      if(s.isCat){s.vx-=fx*0.05;s.vy-=fy*0.05;} if(t.isCat){t.vx-=fx*0.05;t.vy-=fy*0.05;}
+    });
+    // node repulsion
+    for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++) {
+      const dx=nodes[j].x-nodes[i].x, dy=nodes[j].y-nodes[i].y;
+      const d=Math.sqrt(dx*dx+dy*dy)||1, minD=(nodes[i].r+nodes[j].r)*2;
+      if(d<minD){const f=(minD-d)*0.015*a; nodes[i].vx-=dx/d*f; nodes[i].vy-=dy/d*f; nodes[j].vx+=dx/d*f; nodes[j].vy+=dy/d*f;}
+    }
+    // apply
+    nodes.forEach(n => { n.vx*=0.85; n.vy*=0.85; n.x+=n.vx; n.y+=n.vy;
+      n.x=Math.max(n.r+5,Math.min(w-n.r-5,n.x)); n.y=Math.max(n.r+5,Math.min(h-n.r-5,n.y)); });
+  }
+
+  // draw SVG
+  const g = document.createElementNS("http://www.w3.org/2000/svg","g"); svgG = g;
+  links.forEach(l => {
+    const s=nodeById[l.source], t=nodeById[l.target]; if(!s||!t) return;
+    const line=document.createElementNS("http://www.w3.org/2000/svg","line");
+    line.setAttribute("x1",s.x);line.setAttribute("y1",s.y);line.setAttribute("x2",t.x);line.setAttribute("y2",t.y);
+    line.setAttribute("stroke",l.color);line.setAttribute("stroke-opacity",l.cross?0.06:0.2);
+    line.setAttribute("stroke-width",l.cross?0.4:1.2);line.classList.add('link');g.appendChild(line);
+  });
+  nodes.forEach(n => {
+    const grp=document.createElementNS("http://www.w3.org/2000/svg","g"); grp.classList.add('node'); grp.dataset.id=n.id;
+    if(n.isCat){const gl=document.createElementNS("http://www.w3.org/2000/svg","circle");
+      gl.setAttribute("cx",n.x);gl.setAttribute("cy",n.y);gl.setAttribute("r",n.r+6);
+      gl.setAttribute("fill",n.color);gl.setAttribute("fill-opacity","0.1");grp.appendChild(gl);}
+    const c=document.createElementNS("http://www.w3.org/2000/svg","circle");
+    c.setAttribute("cx",n.x);c.setAttribute("cy",n.y);c.setAttribute("r",n.r);
+    c.setAttribute("fill",n.color);c.setAttribute("fill-opacity",n.isCat?"0.85":"0.55");
+    c.setAttribute("stroke",n.color);grp.appendChild(c);
+    const t=document.createElementNS("http://www.w3.org/2000/svg","text");
+    t.setAttribute("x",n.x);t.setAttribute("y",n.y+n.r+12);t.textContent=n.name;
+    t.style.fontSize=n.isCat?'11px':'9px';t.style.fontWeight=n.isCat?'600':'400';
+    t.style.fill=n.isCat?n.color:'#9ba1b0';grp.appendChild(t);
+    grp.addEventListener('click',()=>selectNode(n.id));
+    grp.addEventListener('mouseenter',e=>showTip(e,n));
+    grp.addEventListener('mouseleave',hideTip);
+    g.appendChild(grp);
+  });
+  svg.appendChild(g);
+
+  // zoom/pan
+  let scale=1,tx=0,ty=0;
+  function applyT(){g.setAttribute('transform',`translate(${tx},${ty}) scale(${scale})`);}
+  zb={applyT,get s(){return scale},set s(v){scale=v},get tx(){return tx},set tx(v){tx=v},get ty(){return ty},set ty(v){ty=v}};
+  svg.addEventListener('wheel',e=>{e.preventDefault();const d=e.deltaY>0?0.9:1.1,ns=Math.max(0.2,Math.min(5,scale*d));
+    const r=svg.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+    tx=mx-(mx-tx)*(ns/scale);ty=my-(my-ty)*(ns/scale);scale=ns;applyT();});
+  let dragging=false,dx0,dy0,tx0,ty0;
+  svg.addEventListener('mousedown',e=>{if(e.target.closest('.node'))return;dragging=true;dx0=e.clientX;dy0=e.clientY;tx0=tx;ty0=ty;svg.style.cursor='grabbing';});
+  window.addEventListener('mousemove',e=>{if(!dragging)return;tx=tx0+(e.clientX-dx0);ty=ty0+(e.clientY-dy0);applyT();});
+  window.addEventListener('mouseup',()=>{dragging=false;svg.style.cursor='';});
+}
+
+function showTip(e,n){hideTip();const t=document.createElement('div');t.className='tooltip';
+  const nd=NODES.find(x=>x.id===n.id);t.innerHTML=`<strong>${n.name}</strong>${nd?'<br>'+nd.desc:'<br>Module Category'}`;
+  t.style.left=(e.clientX+10)+'px';t.style.top=(e.clientY-8)+'px';document.body.appendChild(t);t.id='tip';}
+function hideTip(){const t=document.getElementById('tip');if(t)t.remove();}
+function zIn(){if(zb){zb.s=Math.min(5,zb.s*1.2);zb.applyT();}}
+function zOut(){if(zb){zb.s=Math.max(0.2,zb.s/1.2);zb.applyT();}}
+function zReset(){if(zb){zb.s=1;zb.tx=0;zb.ty=0;zb.applyT();}}
+
+function selectNode(id) {
+  const node = NODES.find(n => n.id === id); if(!node) return;
+  document.querySelectorAll('.node-item').forEach(el=>el.classList.remove('active'));
+  const item=document.querySelector(`.node-item[data-id="${id}"]`);
+  if(item){item.classList.add('active');const cat=item.closest('.category');
+    if(cat){cat.querySelector('.children').classList.add('open');cat.querySelector('.arrow').classList.add('open');}
+    item.scrollIntoView({behavior:'smooth',block:'center'});}
+  document.querySelectorAll('.node').forEach(el=>{
+    const nid=el.dataset.id;
+    if(nid===id||nid===node.cat||(node.r&&node.r.includes(nid)))el.style.opacity='1';else el.style.opacity='0.15';});
+  const cat=C.find(c=>c.id===node.cat);
+  const detail=document.getElementById('detail');
+  detail.innerHTML=`<div class="detail-header"><h2><span class="cat-dot" style="background:${cat.c};width:11px;height:11px;"></span>${node.name}</h2>
+    <span class="tag" style="background:${cat.c}22;color:${cat.c}">${cat.name}</span>
+    <p class="desc">${node.desc}</p></div>
+    <div class="detail-class"><div class="cls-label">Core Class</div><code>${node.cls}</code></div>
+    <div class="detail-section"><h3>Features (${node.f.length})</h3><ul>${node.f.map(f=>
+      `<li><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:${cat.c};margin-top:7px;flex-shrink:0;"></span>${f}</li>`).join('')}</ul></div>
+    <div class="relations"><h3>Related (${(node.r||[]).length})</h3><div style="margin-top:3px;">
+      ${(node.r||[]).map(rid=>{const rn=NODES.find(n=>n.id===rid);return rn?`<span class="rel-item" onclick="selectNode('${rid}')">${rn.name}</span>`:'';}).join('')}</div></div>`;
+}
+
+function setupSearch() {
+  document.getElementById('search').addEventListener('input',e=>{
+    const q=e.target.value.toLowerCase().trim();
+    if(!q){document.querySelectorAll('.category').forEach(el=>el.style.display='');
+      document.querySelectorAll('.node-item').forEach(el=>el.style.display='');
+      document.querySelectorAll('.node').forEach(el=>el.style.opacity='');return;}
+    document.querySelectorAll('.node-item').forEach(el=>{
+      const id=el.dataset.id;const n=NODES.find(x=>x.id===id);
+      const m=n&&(n.name.toLowerCase().includes(q)||n.desc.toLowerCase().includes(q)||n.cls.toLowerCase().includes(q)||n.f.some(f=>f.toLowerCase().includes(q)));
+      el.style.display=m?'':'none';
+      if(m){const cat=el.closest('.category');cat.querySelector('.children').classList.add('open');cat.querySelector('.arrow').classList.add('open');}});
+    document.querySelectorAll('.category').forEach(cat=>{
+      const has=Array.from(cat.querySelectorAll('.node-item')).some(el=>el.style.display!=='none');cat.style.display=has?'':'none';});
+    document.querySelectorAll('.node').forEach(el=>{
+      const nid=el.dataset.id;const n=NODES.find(x=>x.id===nid);const cat=C.find(c=>c.id===nid);
+      if(cat){const cn=NODES.filter(n=>n.cat===cat.id);el.style.opacity=(cat.name.toLowerCase().includes(q)||cn.some(n=>n.name.toLowerCase().includes(q)||n.desc.toLowerCase().includes(q)))?'1':'0.1';}
+      else if(n){el.style.opacity=(n.name.toLowerCase().includes(q)||n.desc.toLowerCase().includes(q)||n.cls.toLowerCase().includes(q))?'1':'0.1';}});
+  });
+}
+
+function switchView(view) {
+  document.querySelectorAll('.view-toggle button').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  if(view==='graph'){document.getElementById('graph-area').classList.remove('hidden');document.getElementById('list-view').classList.remove('active');}
+  else{document.getElementById('graph-area').classList.add('hidden');document.getElementById('list-view').classList.add('active');renderListView();}
+}
+function renderListView() {
+  let h='';C.forEach(cat=>{
+    h+=`<div class="cat-group-title" style="border-color:${cat.c}"><span style="color:${cat.c}">●</span> ${cat.name} <span style="font-size:13px;font-weight:400;color:var(--text2);margin-left:7px;">${cat.desc}</span></div>`;
+    cat.children.forEach(n=>{h+=`<div class="list-card" onclick="selectNode('${n.id}')" style="border-left:3px solid ${cat.c}">
+      <h3><span style="color:${cat.c}">●</span> ${n.name} <code style="font-size:10px;color:var(--text2);font-weight:400;">${n.cls}</code></h3>
+      <p>${n.desc}</p><div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:3px;">
+      ${n.f.slice(0,5).map(f=>`<span style="font-size:10px;background:var(--surface);padding:2px 7px;border-radius:10px;color:var(--text2);border:1px solid var(--border);">${f}</span>`).join('')}
+      ${n.f.length>5?`<span style="font-size:10px;color:var(--text2);padding:2px 7px;">+${n.f.length-5} more</span>`:''}</div>
+      <div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:3px;">${(n.r||[]).slice(0,4).map(rid=>{const rn=NODES.find(x=>x.id===rid);return rn?`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(124,172,248,0.1);color:var(--accent);">→ ${rn.name}</span>`:'';}).join('')}</div></div>`;});});
+  document.getElementById('list-view').innerHTML=h;
+}
+
+init();
+</script>
+</body>
+</html>
